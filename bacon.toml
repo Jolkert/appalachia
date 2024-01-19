@@ -36,6 +36,9 @@ command = [
 	"clippy::same_name_method",
 	"-W",
 	"clippy::lossy_float_literal",
+
+	"-A",
+	"clippy::missing_const_for_fn",
 ]
 need_stdout = false
 

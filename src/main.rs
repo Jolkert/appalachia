@@ -1,9 +1,15 @@
 // hex color literals are prefectly fine without spaces thank you very much -morgan 2024-01-15
 #![allow(clippy::unreadable_literal)]
+mod rps;
 
+use std::{collections::HashMap, hash::Hash};
+
+use poise::serenity_prelude::ActivityData;
+use poise::{serenity_prelude as serenity, FrameworkContext};
 use poise::{
 	serenity_prelude::{
-		ClientBuilder, CreateAllowedMentions, CreateEmbed, GatewayIntents, GuildId, Mentionable,
+		ClientBuilder, Color, CreateAllowedMentions, CreateEmbed, FullEvent, GatewayIntents,
+		GuildId, Mentionable, Ready,
 	},
 	CreateReply,
 };
@@ -13,6 +19,9 @@ struct Data;
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
 
+const DEFAULT_COLOR: Color = Color::new(0xa9e5e5);
+const ERROR_COLOR: Color = Color::new(0xe59a9a);
+
 #[tokio::main]
 async fn main()
 {
@@ -21,12 +30,31 @@ async fn main()
 
 	let framework = poise::Framework::builder()
 		.options(poise::FrameworkOptions {
-			commands: vec![roll()],
+			commands: vec![roll(), rps::rps()],
 			prefix_options: poise::PrefixFrameworkOptions {
 				prefix: Some(String::from("$")),
 				mention_as_prefix: true,
 				ignore_bots: true,
 				..Default::default()
+			},
+			pre_command: |ctx| {
+				Box::pin(async move {
+					println!(
+						"{} ({}) running [{}]",
+						ctx.author().name,
+						ctx.author().id,
+						ctx.command().name
+					);
+				})
+			},
+			event_handler: |ctx, event, framework, data| {
+				Box::pin(async move {
+					if let FullEvent::Ready { data_about_bot } = event
+					{
+						on_ready(ctx, data_about_bot, framework, data);
+					}
+					Ok(())
+				})
 			},
 			..Default::default()
 		})
@@ -52,22 +80,40 @@ async fn main()
 	client.unwrap().start().await.unwrap();
 }
 
+#[allow(unused_variables)]
+fn on_ready(
+	ctx: &serenity::Context,
+	ready: &Ready,
+	framework: FrameworkContext<'_, Data, Error>,
+	data: &Data,
+)
+{
+	println!("API v{}", ready.version);
+	println!("Loaded {} commands", framework.options.commands.len());
+
+	ctx.set_activity(Some(ActivityData::custom("Trans rights!")));
+	println!("{} online!", ready.user.name);
+}
+
+/// Enter a dice expression to roll
 #[poise::command(slash_command, prefix_command)]
 async fn roll(
 	ctx: Context<'_>,
-	#[description = "Dice roll"]
+	#[description = "Dice expression"]
 	#[rest]
 	roll_str: String,
 ) -> Result<(), Error>
 {
+	let roll_result = saikoro::evaluate(&roll_str);
 	let reply = CreateReply::default()
-		.embed(embed_from_roll(
-			&ctx,
-			&roll_str,
-			saikoro::evaluate(&roll_str),
-		))
+		.embed(embed_from_roll(&ctx, &roll_str, &roll_result))
 		.reply(true)
-		.allowed_mentions(CreateAllowedMentions::default().empty_roles().empty_users());
+		.allowed_mentions(CreateAllowedMentions::new());
+
+	if roll_result.is_err()
+	{
+		ctx.defer_ephemeral().await?;
+	}
 
 	ctx.send(reply).await?;
 	Ok(())
@@ -76,7 +122,7 @@ async fn roll(
 fn embed_from_roll(
 	ctx: &Context<'_>,
 	input_string: &str,
-	roll: Result<DiceEvaluation, ParsingError>,
+	roll: &Result<DiceEvaluation, ParsingError>,
 ) -> CreateEmbed
 {
 	match roll
@@ -88,7 +134,7 @@ fn embed_from_roll(
 				roll.value,
 				ctx.author().mention(),
 			))
-			.color(0x9ae59a)
+			.color(DEFAULT_COLOR)
 			.fields(roll.roll_groups.iter().map(|group| {
 				(
 					format!("{}d{}", group.len(), group.faces),
@@ -109,6 +155,18 @@ fn embed_from_roll(
 				"Trying to interpret `{input_string}` failed!\n*{}*",
 				err.to_string().replace('*', r"\*")
 			))
-			.color(0xe59a9a),
+			.color(ERROR_COLOR),
+	}
+}
+
+trait InsertPair<K, V>
+{
+	fn insert_pair(&mut self, pair: (K, V)) -> Option<V>;
+}
+impl<K: Eq + Hash, V> InsertPair<K, V> for HashMap<K, V>
+{
+	fn insert_pair(&mut self, pair: (K, V)) -> Option<V>
+	{
+		self.insert(pair.0, pair.1)
 	}
 }
