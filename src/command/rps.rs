@@ -2,9 +2,8 @@ use std::{fmt::Display, time::Duration};
 
 use poise::{
 	serenity_prelude::{
-		ButtonStyle, ComponentInteraction, CreateActionRow, CreateAllowedMentions, CreateButton,
-		CreateEmbed, CreateEmbedFooter, CreateInteractionResponse,
-		CreateInteractionResponseMessage, CreateMessage, Mentionable, Message, User, UserId,
+		ButtonStyle, CreateActionRow, CreateAllowedMentions, CreateButton, CreateEmbed,
+		CreateEmbedFooter, CreateMessage, Mentionable, Message, User, UserId,
 	},
 	CreateReply,
 };
@@ -16,7 +15,7 @@ use crate::{Context, Error};
 pub async fn rps(
 	ctx: Context<'_>,
 	#[description = "Player to challenge"] opponent: User,
-	#[description = "The amount of games needed to win (defaults to 1)"] first_to: Option<u32>,
+	#[description = "The amount of games needed to win (default: 1)"] first_to: Option<u32>,
 ) -> Result<(), Error>
 {
 	if ctx.author().id == opponent.id
@@ -98,7 +97,7 @@ async fn await_accept(
 
 		if interaction.user.id != opponent.id
 		{
-			respond_ephemeral(
+			crate::respond_ephemeral(
 				interaction,
 				ctx,
 				CreateEmbed::new()
@@ -115,7 +114,7 @@ async fn await_accept(
 		{
 			"rps-accept" =>
 			{
-				respond_to(
+				crate::respond_to(
 					interaction,
 					ctx,
 					CreateEmbed::new()
@@ -129,7 +128,7 @@ async fn await_accept(
 			}
 			"rps-deny" =>
 			{
-				respond_to(
+				crate::respond_to(
 					interaction,
 					ctx,
 					CreateEmbed::new()
@@ -279,7 +278,7 @@ async fn await_selections(
 		let Some(side) = game.side_by_id(interaction.user.id)
 		else
 		{
-			respond_ephemeral(
+			crate::respond_ephemeral(
 				interaction,
 				ctx,
 				CreateEmbed::new()
@@ -293,7 +292,7 @@ async fn await_selections(
 
 		if game[side].has_selected()
 		{
-			respond_ephemeral(
+			crate::respond_ephemeral(
 				interaction,
 				ctx,
 				CreateEmbed::new()
@@ -314,7 +313,7 @@ async fn await_selections(
 		};
 		game[side].select(selection);
 
-		respond_ephemeral(
+		crate::respond_ephemeral(
 			interaction,
 			ctx,
 			CreateEmbed::new()
@@ -330,46 +329,6 @@ async fn await_selections(
 		}
 	}
 }
-
-async fn respond_to(
-	interaction: ComponentInteraction,
-	ctx: Context<'_>,
-	embed: CreateEmbed,
-) -> Result<(), Error>
-{
-	interaction
-		.create_response(
-			ctx,
-			CreateInteractionResponse::Message(
-				CreateInteractionResponseMessage::new()
-					.embed(embed)
-					.allowed_mentions(CreateAllowedMentions::new()),
-			),
-		)
-		.await?;
-	Ok(())
-}
-
-async fn respond_ephemeral(
-	interaction: ComponentInteraction,
-	ctx: Context<'_>,
-	embed: CreateEmbed,
-) -> Result<(), Error>
-{
-	interaction
-		.create_response(
-			ctx,
-			CreateInteractionResponse::Message(
-				CreateInteractionResponseMessage::new()
-					.embed(embed)
-					.allowed_mentions(CreateAllowedMentions::new())
-					.ephemeral(true),
-			),
-		)
-		.await?;
-	Ok(())
-}
-
 struct Game
 {
 	challenger: Player,

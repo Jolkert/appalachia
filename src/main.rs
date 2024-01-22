@@ -1,19 +1,15 @@
 // hex color literals are prefectly fine without spaces thank you very much -morgan 2024-01-15
 #![allow(clippy::unreadable_literal)]
-mod rps;
+mod command;
 
-use std::{collections::HashMap, hash::Hash};
-
-use poise::serenity_prelude::ActivityData;
-use poise::{serenity_prelude as serenity, FrameworkContext};
 use poise::{
 	serenity_prelude::{
-		ClientBuilder, Color, CreateAllowedMentions, CreateEmbed, FullEvent, GatewayIntents,
-		GuildId, Mentionable, Ready,
+		self as serenity, ActivityData, ClientBuilder, Color, ComponentInteraction,
+		CreateAllowedMentions, CreateEmbed, CreateInteractionResponse,
+		CreateInteractionResponseMessage, FullEvent, GatewayIntents, GuildId, Ready,
 	},
-	CreateReply,
+	FrameworkContext,
 };
-use saikoro::{error::ParsingError, evaluation::DiceEvaluation};
 
 struct Data;
 type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -30,7 +26,7 @@ async fn main()
 
 	let framework = poise::Framework::builder()
 		.options(poise::FrameworkOptions {
-			commands: vec![roll(), flip(), rps::rps()],
+			commands: vec![command::roll(), command::flip(), command::rps()],
 			prefix_options: poise::PrefixFrameworkOptions {
 				prefix: Some(String::from("$")),
 				mention_as_prefix: true,
@@ -95,106 +91,41 @@ fn on_ready(
 	println!("{} online!", ready.user.name);
 }
 
-/// Enter a dice expression to roll
-#[poise::command(slash_command, prefix_command)]
-async fn roll(
+async fn respond_to(
+	interaction: ComponentInteraction,
 	ctx: Context<'_>,
-	#[description = "Dice expression"]
-	#[rest]
-	roll_str: String,
+	embed: CreateEmbed,
 ) -> Result<(), Error>
 {
-	let roll_result = saikoro::evaluate(&roll_str);
-	let reply = CreateReply::default()
-		.embed(embed_from_roll(&ctx, &roll_str, &roll_result))
-		.reply(true)
-		.allowed_mentions(CreateAllowedMentions::new());
-
-	if roll_result.is_err()
-	{
-		ctx.defer_ephemeral().await?;
-	}
-
-	ctx.send(reply).await?;
+	interaction
+		.create_response(
+			ctx,
+			CreateInteractionResponse::Message(
+				CreateInteractionResponseMessage::new()
+					.embed(embed)
+					.allowed_mentions(CreateAllowedMentions::new()),
+			),
+		)
+		.await?;
 	Ok(())
 }
 
-fn embed_from_roll(
-	ctx: &Context<'_>,
-	input_string: &str,
-	roll: &Result<DiceEvaluation, ParsingError>,
-) -> CreateEmbed
+async fn respond_ephemeral(
+	interaction: ComponentInteraction,
+	ctx: Context<'_>,
+	embed: CreateEmbed,
+) -> Result<(), Error>
 {
-	match roll
-	{
-		Ok(roll) => CreateEmbed::new()
-			.title("The dice have spoken")
-			.description(format!(
-				"# **{}**\n{} rolled `{input_string}`",
-				roll.value,
-				ctx.author().mention(),
-			))
-			.color(DEFAULT_COLOR)
-			.fields(roll.roll_groups.iter().map(|group| {
-				(
-					format!("{}d{}", group.len(), group.faces),
-					format!(
-						"[{}]",
-						group
-							.iter()
-							.map(ToString::to_string)
-							.collect::<Vec<_>>()
-							.join(", ")
-					),
-					true,
-				)
-			})),
-		Err(err) => CreateEmbed::new()
-			.title("Error parsing dice expression!")
-			.description(format!(
-				"Trying to interpret `{input_string}` failed!\n*{}*",
-				err.to_string().replace('*', r"\*")
-			))
-			.color(ERROR_COLOR),
-	}
-}
-
-#[poise::command(slash_command, prefix_command)]
-async fn flip(ctx: Context<'_>) -> Result<(), Error>
-{
-	ctx.send(
-		CreateReply::default()
-			.embed(
-				CreateEmbed::new()
-					.title("Fortuna says:")
-					.description(format!(
-						"# {}",
-						if rand::random::<bool>()
-						{
-							"Heads"
-						}
-						else
-						{
-							"Tails"
-						}
-					))
-					.color(DEFAULT_COLOR),
-			)
-			.reply(true)
-			.allowed_mentions(CreateAllowedMentions::new()),
-	)
-	.await?;
+	interaction
+		.create_response(
+			ctx,
+			CreateInteractionResponse::Message(
+				CreateInteractionResponseMessage::new()
+					.embed(embed)
+					.allowed_mentions(CreateAllowedMentions::new())
+					.ephemeral(true),
+			),
+		)
+		.await?;
 	Ok(())
-}
-
-trait InsertPair<K, V>
-{
-	fn insert_pair(&mut self, pair: (K, V)) -> Option<V>;
-}
-impl<K: Eq + Hash, V> InsertPair<K, V> for HashMap<K, V>
-{
-	fn insert_pair(&mut self, pair: (K, V)) -> Option<V>
-	{
-		self.insert(pair.0, pair.1)
-	}
 }
