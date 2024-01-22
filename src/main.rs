@@ -30,7 +30,7 @@ async fn main()
 
 	let framework = poise::Framework::builder()
 		.options(poise::FrameworkOptions {
-			commands: vec![roll(), rps::rps()],
+			commands: vec![roll(), flip(), rps::rps()],
 			prefix_options: poise::PrefixFrameworkOptions {
 				prefix: Some(String::from("$")),
 				mention_as_prefix: true,
@@ -157,6 +157,34 @@ fn embed_from_roll(
 			))
 			.color(ERROR_COLOR),
 	}
+}
+
+#[poise::command(slash_command, prefix_command)]
+async fn flip(ctx: Context<'_>) -> Result<(), Error>
+{
+	ctx.send(
+		CreateReply::default()
+			.embed(
+				CreateEmbed::new()
+					.title("Fortuna says:")
+					.description(format!(
+						"# {}",
+						if rand::random::<bool>()
+						{
+							"Heads"
+						}
+						else
+						{
+							"Tails"
+						}
+					))
+					.color(DEFAULT_COLOR),
+			)
+			.reply(true)
+			.allowed_mentions(CreateAllowedMentions::new()),
+	)
+	.await?;
+	Ok(())
 }
 
 trait InsertPair<K, V>
