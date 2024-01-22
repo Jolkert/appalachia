@@ -43,12 +43,18 @@ async fn main()
 					);
 				})
 			},
-			event_handler: |ctx, event, framework, data| {
+			event_handler: |ctx, event, framework, _data| {
 				Box::pin(async move {
-					if let FullEvent::Ready { data_about_bot } = event
+					match event
 					{
-						on_ready(ctx, data_about_bot, framework, data);
+						FullEvent::Ready { data_about_bot } =>
+						{
+							on_ready(ctx, data_about_bot, framework);
+						}
+						FullEvent::CacheReady { guilds } => on_cache_ready(guilds),
+						_ => (),
 					}
+
 					Ok(())
 				})
 			},
@@ -76,19 +82,19 @@ async fn main()
 	client.unwrap().start().await.unwrap();
 }
 
-#[allow(unused_variables)]
-fn on_ready(
-	ctx: &serenity::Context,
-	ready: &Ready,
-	framework: FrameworkContext<'_, Data, Error>,
-	data: &Data,
-)
+fn on_ready(ctx: &serenity::Context, ready: &Ready, framework: FrameworkContext<'_, Data, Error>)
 {
-	println!("API v{}", ready.version);
+	println!("Appalachia v{}", env!("CARGO_PKG_VERSION"));
+	println!("Discord API v{}", ready.version);
 	println!("Loaded {} commands", framework.options.commands.len());
 
 	ctx.set_activity(Some(ActivityData::custom("Trans rights!")));
 	println!("{} online!", ready.user.name);
+}
+
+fn on_cache_ready(guilds: &[GuildId])
+{
+	println!("Active in {} guilds", guilds.len());
 }
 
 async fn respond_to(
