@@ -1,7 +1,7 @@
 use std::{collections::HashMap, hash::Hash};
 
 use poise::{
-	serenity_prelude::{CreateAllowedMentions, CreateEmbed, Mentionable},
+	serenity_prelude::{CreateAllowedMentions, CreateEmbed, CreateEmbedFooter, Mentionable},
 	CreateReply,
 };
 use saikoro::{error::ParsingError, evaluation::DiceEvaluation};
@@ -21,13 +21,22 @@ pub async fn roll(
 ) -> Result<(), Error>
 {
 	let roll_result = saikoro::evaluate(&dice);
-	let reply = CreateReply::default()
-		.embed(embed_from_roll(&ctx, &dice, &roll_result))
-		.reply(true)
-		.allowed_mentions(CreateAllowedMentions::new())
-		.ephemeral(hidden || roll_result.is_err());
+	let mut embed = embed_from_roll(&ctx, &dice, &roll_result);
+	if hidden && let poise::Context::Prefix(_) = ctx
+	{
+		embed = embed.footer(CreateEmbedFooter::new(
+			"Note: hidden rolls dont't work with non-slash commands!",
+		));
+	}
 
-	ctx.send(reply).await?;
+	ctx.send(
+		CreateReply::default()
+			.embed(embed)
+			.reply(true)
+			.allowed_mentions(CreateAllowedMentions::new())
+			.ephemeral(hidden || roll_result.is_err()),
+	)
+	.await?;
 	Ok(())
 }
 
