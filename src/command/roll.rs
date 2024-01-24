@@ -59,7 +59,7 @@ fn embed_from_roll(
 								let wrap = (roll.original_value >= group.faces)
 									.then_some("**")
 									.unwrap_or_default();
-								format!("{}{}{}", wrap, roll, wrap)
+								format!("{wrap}{roll}{wrap}")
 							})
 							.collect::<Vec<_>>()
 							.join(", ")
