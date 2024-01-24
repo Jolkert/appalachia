@@ -12,21 +12,20 @@ use crate::{Context, Error};
 #[poise::command(slash_command, prefix_command)]
 pub async fn roll(
 	ctx: Context<'_>,
-	#[description = "Dice expression"]
+	#[flag]
+	#[description = "When true, only you will see the results"]
+	hidden: bool,
+	#[description = "The dice expression to be evaluated"]
 	#[rest]
-	roll_str: String,
+	dice: String,
 ) -> Result<(), Error>
 {
-	let roll_result = saikoro::evaluate(&roll_str);
+	let roll_result = saikoro::evaluate(&dice);
 	let reply = CreateReply::default()
-		.embed(embed_from_roll(&ctx, &roll_str, &roll_result))
+		.embed(embed_from_roll(&ctx, &dice, &roll_result))
 		.reply(true)
-		.allowed_mentions(CreateAllowedMentions::new());
-
-	if roll_result.is_err()
-	{
-		ctx.defer_ephemeral().await?;
-	}
+		.allowed_mentions(CreateAllowedMentions::new())
+		.ephemeral(hidden || roll_result.is_err());
 
 	ctx.send(reply).await?;
 	Ok(())
