@@ -55,7 +55,12 @@ fn embed_from_roll(
 						"[{}]",
 						group
 							.iter()
-							.map(ToString::to_string)
+							.map(|roll| {
+								let wrap = (roll.original_value >= group.faces)
+									.then_some("**")
+									.unwrap_or_default();
+								format!("{}{}{}", wrap, roll, wrap)
+							})
 							.collect::<Vec<_>>()
 							.join(", ")
 					),

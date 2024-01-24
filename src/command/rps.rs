@@ -11,7 +11,7 @@ use poise::{
 use crate::{Context, Error};
 
 /// Challenge another user to a game of Rock, Paper, Scissors
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(slash_command, prefix_command, guild_only)]
 pub async fn rps(
 	ctx: Context<'_>,
 	#[description = "Player to challenge"] opponent: User,

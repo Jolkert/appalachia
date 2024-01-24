@@ -8,5 +8,5 @@ edition = "2021"
 [dependencies]
 poise = "0.6.1"
 rand = "0.8.5"
-saikoro = "1.1.0"
+saikoro = "1.1.1"
 tokio = { version = "1.35.1", features = ["full"] }
