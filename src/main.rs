@@ -7,7 +7,7 @@ mod command;
 use poise::{
 	serenity_prelude::{
 		self as serenity, ActivityData, ClientBuilder, Color, ComponentInteraction,
-		CreateAllowedMentions, CreateEmbed, CreateInteractionResponse,
+		CreateAllowedMentions, CreateEmbed, CreateEmbedFooter, CreateInteractionResponse,
 		CreateInteractionResponseMessage, FullEvent, GatewayIntents, GuildId, Ready,
 	},
 	FrameworkContext,
@@ -136,4 +136,16 @@ async fn respond_ephemeral(
 		)
 		.await?;
 	Ok(())
+}
+
+fn error_embed(description: impl Into<String>) -> CreateEmbed
+{
+	CreateEmbed::new()
+		.title("Error")
+		.description(description)
+		.color(ERROR_COLOR)
+		.footer(
+			CreateEmbedFooter::new("If you think this is a bug, contact my mama, Jolkert!")
+				.icon_url("https://jolkert.dev/img/icon_small.png"),
+		)
 }

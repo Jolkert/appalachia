@@ -22,12 +22,7 @@ pub async fn rps(
 	{
 		ctx.send(
 			CreateReply::default()
-				.embed(
-					CreateEmbed::new()
-						.title("Error")
-						.description("You can't challenge yourself!")
-						.color(crate::ERROR_COLOR),
-				)
+				.embed(crate::error_embed("You can't challenge yourself!"))
 				.reply(true)
 				.allowed_mentions(CreateAllowedMentions::new())
 				.ephemeral(true),
@@ -100,10 +95,7 @@ async fn await_accept(
 			crate::respond_ephemeral(
 				interaction,
 				ctx,
-				CreateEmbed::new()
-					.title("Error")
-					.description("Only the challenged user may accept or decline!")
-					.color(crate::ERROR_COLOR),
+				crate::error_embed("Only the challenged user may accept or decline!"),
 			)
 			.await?;
 
@@ -281,10 +273,7 @@ async fn await_selections(
 			crate::respond_ephemeral(
 				interaction,
 				ctx,
-				CreateEmbed::new()
-					.title("Error")
-					.description("Only the person who was challenged is allowed to respond!")
-					.color(crate::ERROR_COLOR),
+				crate::error_embed("Only the person who was challenged is allowed to respond!"),
 			)
 			.await?;
 			continue;
@@ -295,10 +284,7 @@ async fn await_selections(
 			crate::respond_ephemeral(
 				interaction,
 				ctx,
-				CreateEmbed::new()
-					.title("Error")
-					.description("You have already selected!")
-					.color(crate::ERROR_COLOR),
+				crate::error_embed("You have already selected!"),
 			)
 			.await?;
 			continue;

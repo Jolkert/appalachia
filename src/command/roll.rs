@@ -75,13 +75,10 @@ fn embed_from_roll(
 					true,
 				)
 			})),
-		Err(err) => CreateEmbed::new()
-			.title("Error parsing dice expression!")
-			.description(format!(
-				"Trying to interpret `{input_string}` failed!\n*{}*",
-				err.to_string().replace('*', r"\*")
-			))
-			.color(crate::ERROR_COLOR),
+		Err(err) => crate::error_embed(format!(
+			"Trying to interpret `{input_string}` failed!\n*{}*",
+			err.to_string().replace('*', r"\*")
+		)),
 	}
 }
 
