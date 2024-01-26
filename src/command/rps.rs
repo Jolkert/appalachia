@@ -3,10 +3,12 @@ use std::{fmt::Display, time::Duration};
 use poise::{
 	serenity_prelude::{
 		ButtonStyle, CreateActionRow, CreateAllowedMentions, CreateButton, CreateEmbed,
-		CreateEmbedFooter, CreateMessage, Mentionable, Message, User, UserId,
+		CreateEmbedFooter, CreateMessage, Member, Mentionable, Message, UserId,
 	},
 	CreateReply,
 };
+use strum::IntoEnumIterator;
+use strum_macros::{EnumIter, IntoStaticStr};
 
 use crate::{Context, Error};
 
@@ -14,11 +16,11 @@ use crate::{Context, Error};
 #[poise::command(slash_command, prefix_command, guild_only)]
 pub async fn rps(
 	ctx: Context<'_>,
-	#[description = "Player to challenge"] opponent: User,
+	#[description = "Player to challenge"] opponent: Member,
 	#[description = "The amount of games needed to win (default: 1)"] first_to: Option<u32>,
 ) -> Result<(), Error>
 {
-	if ctx.author().id == opponent.id
+	if ctx.author().id == opponent.user.id
 	{
 		ctx.send(
 			CreateReply::default()
@@ -48,7 +50,7 @@ pub async fn rps(
 				))
 				.color(crate::DEFAULT_COLOR)
 				.footer(CreateEmbedFooter::new(
-					"Interctions will only be valid an hour of this message being sent",
+					"\u{2757} Interctions will only be valid an hour of this message being sent",
 				)),
 		)
 		.components(vec![CreateActionRow::Buttons(vec![
@@ -76,7 +78,7 @@ pub async fn rps(
 async fn await_accept(
 	ctx: Context<'_>,
 	challenge_message: &Message,
-	opponent: &User,
+	opponent: &Member,
 ) -> Result<bool, Error>
 {
 	let accepted = loop
@@ -90,7 +92,7 @@ async fn await_accept(
 			continue;
 		};
 
-		if interaction.user.id != opponent.id
+		if interaction.user.id != opponent.user.id
 		{
 			crate::respond_ephemeral(
 				interaction,
@@ -141,7 +143,8 @@ async fn await_accept(
 	Ok(accepted)
 }
 
-async fn process_selections(ctx: Context<'_>, opponent: &User, first_to: u32) -> Result<(), Error>
+async fn process_selections(ctx: Context<'_>, opponent: &Member, first_to: u32)
+	-> Result<(), Error>
 {
 	let channel = ctx.guild_channel().await.unwrap();
 	let message_template = CreateMessage::new()
@@ -151,23 +154,26 @@ async fn process_selections(ctx: Context<'_>, opponent: &User, first_to: u32) ->
 				.description("Pick rock, paper, or, scissors")
 				.color(crate::DEFAULT_COLOR)
 				.footer(CreateEmbedFooter::new(
-					"Interctions will only be valid an hour of this message being sent",
+					"\u{2757} Interctions will only be valid an hour of this message being sent",
 				)),
 		)
-		.components(vec![CreateActionRow::Buttons(vec![
-			CreateButton::new("rock").label("rock").emoji('\u{270a}'),
-			CreateButton::new("paper").label("paper").emoji('\u{1f590}'),
-			CreateButton::new("scissors")
-				.label("scissors")
-				.emoji('\u{270c}'),
-		])]);
+		.components(vec![CreateActionRow::Buttons(
+			Selection::map(Selection::button).collect(),
+		)]);
 
-	// we fetch user through http instead of just passing the reference from the commands so we can
-	// use the accent color later. Side effect of that is that apparently Http::get_user returns an
-	// owned User? Thats weird -morgan 2024-01-18
+	// we fetch member through http instead of just passing the reference from the commands so we
+	// can use the accent color later.  2024-01-18
 	let mut game = Game::new(
-		Player::new(ctx.http().get_user(ctx.author().id).await?),
-		Player::new(ctx.http().get_user(opponent.id).await?),
+		Player::new(
+			ctx.http()
+				.get_member(ctx.guild_id().unwrap(), ctx.author().id)
+				.await?,
+		),
+		Player::new(
+			ctx.http()
+				.get_member(ctx.guild_id().unwrap(), opponent.user.id)
+				.await?,
+		),
 		first_to,
 	);
 
@@ -195,53 +201,11 @@ async fn process_selections(ctx: Context<'_>, opponent: &User, first_to: u32) ->
 			game[winner].increment_score();
 		}
 
-		let is_declared = game.has_winner();
-		let title = is_declared
-			.then(|| String::from("Game, set, and match!"))
-			.unwrap_or_else(|| format!("Round {}", game.round_count));
-		let results_embed = if let Some(winner) = winning_side.map(|it| game.get_player(it))
-		{
-			let mut embed = CreateEmbed::new()
-				.title(title)
-				.description(format!(
-					"# {} wins{}!\n{} chose {}\n{} chose {}\nScore: `{}-{}`",
-					winner.user.mention(),
-					(is_declared && game.first_to > 1)
-						.then_some(" the set")
-						.unwrap_or_default(),
-					game.challenger.user.mention(),
-					selections.0,
-					game.opponent.user.mention(),
-					selections.1,
-					game.challenger.score,
-					game.opponent.score,
-				))
-				.color(winner.user.accent_colour.unwrap_or(crate::DEFAULT_COLOR));
-			if let Some(avatar) = winner.user.avatar_url()
-			{
-				embed = embed.thumbnail(avatar);
-			}
-
-			embed
-		}
-		else
-		{
-			CreateEmbed::new()
-				.title(title)
-				.description(format!(
-					"# It's a tie!\n{} chose {}\n{} chose {}\nScore: `{}-{}`",
-					game.challenger.user.mention(),
-					selections.0,
-					game.opponent.user.mention(),
-					selections.1,
-					game.challenger.score,
-					game.opponent.score,
-				))
-				.color(crate::DEFAULT_COLOR)
-		};
-
 		channel
-			.send_message(ctx, CreateMessage::new().embed(results_embed))
+			.send_message(
+				ctx,
+				CreateMessage::new().embed(game.winner_embed(winning_side, selections)),
+			)
 			.await?;
 
 		game.next_round();
@@ -345,11 +309,11 @@ impl Game
 
 	fn side_by_id(&self, id: UserId) -> Option<Side>
 	{
-		if id == self.challenger.user.id
+		if id == self.challenger.id()
 		{
 			Some(Side::Challenger)
 		}
-		else if id == self.opponent.user.id
+		else if id == self.opponent.id()
 		{
 			Some(Side::Opponent)
 		}
@@ -378,6 +342,60 @@ impl Game
 		self.challenger.selection = None;
 		self.opponent.selection = None;
 		self.round_count += 1;
+	}
+
+	fn winner_embed(
+		&self,
+		winning_side: Option<Side>,
+		selections: (Selection, Selection),
+	) -> CreateEmbed
+	{
+		let is_declared = self.has_winner();
+		let title = is_declared
+			.then(|| String::from("Game, set, and match!"))
+			.unwrap_or_else(|| format!("Round {}", self.round_count));
+
+		if let Some(winner) = winning_side.map(|it| self.get_player(it))
+		{
+			CreateEmbed::new()
+				.title(title)
+				.description(format!(
+					"# {} wins{}!\n{} chose {}\n{} chose {}\nScore: `{}-{}`",
+					winner.member.mention(),
+					(is_declared && self.first_to > 1)
+						.then_some(" the set")
+						.unwrap_or_default(),
+					self.challenger.member.mention(),
+					selections.0,
+					self.opponent.member.mention(),
+					selections.1,
+					self.challenger.score,
+					self.opponent.score,
+				))
+				.color(
+					winner
+						.member
+						.user
+						.accent_colour
+						.unwrap_or(crate::DEFAULT_COLOR),
+				)
+				.thumbnail(winner.member.face())
+		}
+		else
+		{
+			CreateEmbed::new()
+				.title(title)
+				.description(format!(
+					"# It's a tie!\n{} chose {}\n{} chose {}\nScore: `{}-{}`",
+					self.challenger.member.mention(),
+					selections.0,
+					self.opponent.member.mention(),
+					selections.1,
+					self.challenger.score,
+					self.opponent.score,
+				))
+				.color(crate::DEFAULT_COLOR)
+		}
 	}
 }
 impl std::ops::Index<Side> for Game
@@ -408,19 +426,24 @@ impl std::ops::IndexMut<Side> for Game
 #[derive(Debug)]
 struct Player
 {
-	user: User,
+	member: Member,
 	selection: Option<Selection>,
 	score: u32,
 }
 impl Player
 {
-	fn new(user: User) -> Self
+	fn new(member: Member) -> Self
 	{
 		Self {
-			user,
+			member,
 			selection: None,
 			score: 0,
 		}
+	}
+
+	fn id(&self) -> UserId
+	{
+		self.member.user.id
 	}
 
 	fn select(&mut self, selection: Selection)
@@ -446,7 +469,7 @@ enum Side
 	Opponent,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, IntoStaticStr, EnumIter)]
 enum Selection
 {
 	Rock,
@@ -455,20 +478,37 @@ enum Selection
 }
 impl Selection
 {
-	fn as_str(self) -> &'static str
+	fn map<T>(f: impl FnMut(Self) -> T) -> impl Iterator<Item = T>
+	{
+		Self::iter().map(f)
+	}
+
+	fn emoji(self) -> char
 	{
 		match self
 		{
-			Self::Rock => "Rock \u{270a}",
-			Self::Paper => "Paper \u{1f590}",
-			Self::Scissors => "Scissors \u{270c}",
+			Self::Rock => '\u{270a}',
+			Self::Paper => '\u{1f590}',
+			Self::Scissors => '\u{270c}',
 		}
+	}
+
+	fn as_str(self) -> &'static str
+	{
+		self.into()
+	}
+
+	fn button(self) -> CreateButton
+	{
+		CreateButton::new(self.as_str().to_lowercase())
+			.label(self.as_str())
+			.emoji(self.emoji())
 	}
 }
 impl Display for Selection
 {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
 	{
-		write!(f, "{}", (*self).as_str())
+		write!(f, "{} {}", (*self).as_str(), (*self).emoji())
 	}
 }

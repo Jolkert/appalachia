@@ -9,4 +9,6 @@ edition = "2021"
 poise = "0.6.1"
 rand = "0.8.5"
 saikoro = "1.1.1"
+strum = "0.25.0"
+strum_macros = "0.25.3"
 tokio = { version = "1.35.1", features = ["full"] }

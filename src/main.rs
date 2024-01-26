@@ -60,6 +60,7 @@ async fn main()
 					Ok(())
 				})
 			},
+			allowed_mentions: Some(CreateAllowedMentions::new().all_users(true)),
 			..Default::default()
 		})
 		.setup(|ctx, _ready, framework| {
