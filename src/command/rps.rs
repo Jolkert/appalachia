@@ -355,7 +355,7 @@ impl Game
 			.then(|| String::from("Game, set, and match!"))
 			.unwrap_or_else(|| format!("Round {}", self.round_count));
 
-		if let Some(winner) = winning_side.map(|it| self.get_player(it))
+		if let Some(winner) = winning_side.map(|side| self.get_player(side))
 		{
 			CreateEmbed::new()
 				.title(title)

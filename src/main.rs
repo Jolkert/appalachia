@@ -28,7 +28,12 @@ async fn main()
 
 	let framework = poise::Framework::builder()
 		.options(poise::FrameworkOptions {
-			commands: vec![command::roll(), command::flip(), command::rps()],
+			commands: vec![
+				command::roll(),
+				command::flip(),
+				command::rps(),
+				command::random(),
+			],
 			prefix_options: poise::PrefixFrameworkOptions {
 				prefix: Some(String::from("$")),
 				mention_as_prefix: true,
@@ -91,7 +96,9 @@ fn on_ready(ctx: &serenity::Context, ready: &Ready, framework: FrameworkContext<
 	println!("Discord API v{}", ready.version);
 	println!("Loaded {} commands", framework.options.commands.len());
 
-	ctx.set_activity(Some(ActivityData::custom("Trans rights!")));
+	ctx.set_activity(Some(ActivityData::custom(
+		"\u{1f3f3}\u{200d}\u{26a7} Trans rights!",
+	)));
 	println!("{} online!", ready.user.name);
 }
 
