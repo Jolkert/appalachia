@@ -14,7 +14,7 @@ pub async fn random(_: Context<'_>) -> Result<(), Error>
 	Ok(())
 }
 
-#[poise::command(prefix_command, slash_command, guild_only, category = "test")]
+#[poise::command(prefix_command, slash_command, guild_only)]
 pub async fn user(
 	ctx: Context<'_>,
 	include_self: Option<bool>,
