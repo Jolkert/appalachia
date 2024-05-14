@@ -16,14 +16,7 @@ pub async fn flip(ctx: Context<'_>) -> Result<(), Error>
 					.title("Fortuna says:")
 					.description(format!(
 						"# {}",
-						if rand::random::<bool>()
-						{
-							"Heads"
-						}
-						else
-						{
-							"Tails"
-						}
+						if rand::random() { "Heads" } else { "Tails" }
 					))
 					.color(crate::DEFAULT_COLOR),
 			)
