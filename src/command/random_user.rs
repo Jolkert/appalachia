@@ -37,9 +37,10 @@ pub async fn user(
 		(!include_self && member.user.id == ctx.author().id) || (!include_bots && member.user.bot)
 	};
 
+	let guild_id = ctx.guild_id().unwrap();
 	let members = ctx
 		.http()
-		.get_guild_members(ctx.guild_id().unwrap(), None, None)
+		.get_guild_members(guild_id, None, None)
 		.await?
 		.into_iter()
 		.filter(|member| !should_exclude(member))
@@ -52,7 +53,7 @@ pub async fn user(
 		// of them seem to work properly? kinda weird -morgan 2024-05-14
 		let mut rng = rand::thread_rng();
 		ctx.http().get_member(
-			ctx.guild_id().unwrap(),
+			guild_id,
 			members.choose(&mut rng).ok_or(NoMembersError)?.user.id,
 		)
 	}

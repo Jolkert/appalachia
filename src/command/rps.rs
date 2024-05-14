@@ -163,17 +163,10 @@ async fn process_selections(ctx: Context<'_>, opponent: &Member, first_to: u32)
 
 	// we fetch member through http instead of just passing the reference from the commands so we
 	// can use the accent color later.  2024-01-18
+	let guild_id = ctx.guild_id().unwrap();
 	let mut game = Game::new(
-		Player::new(
-			ctx.http()
-				.get_member(ctx.guild_id().unwrap(), ctx.author().id)
-				.await?,
-		),
-		Player::new(
-			ctx.http()
-				.get_member(ctx.guild_id().unwrap(), opponent.user.id)
-				.await?,
-		),
+		Player::new(ctx.http().get_member(guild_id, ctx.author().id).await?),
+		Player::new(ctx.http().get_member(guild_id, opponent.user.id).await?),
 		first_to,
 	);
 
