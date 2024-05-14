@@ -21,10 +21,12 @@ const DEFAULT_COLOR: Color = Color::new(0xa9e5e5);
 const ERROR_COLOR: Color = Color::new(0xe59a9a);
 
 #[tokio::main]
-async fn main()
+async fn main() -> Result<(), Error>
 {
 	let token = std::fs::read_to_string("token").expect("could not find token file!");
 	let intents = GatewayIntents::all();
+
+	let config = load_config()?;
 
 	let framework = poise::Framework::builder()
 		.options(poise::FrameworkOptions {
@@ -35,7 +37,7 @@ async fn main()
 				command::random(),
 			],
 			prefix_options: poise::PrefixFrameworkOptions {
-				prefix: Some(String::from("$")),
+				prefix: Some(config.prefix),
 				mention_as_prefix: true,
 				ignore_bots: true,
 				..Default::default()
@@ -88,6 +90,22 @@ async fn main()
 		.await;
 
 	client.unwrap().start().await.unwrap();
+	Ok(())
+}
+
+fn load_config() -> Result<Config, Error>
+{
+	match std::fs::read_to_string("config.toml")
+	{
+		Ok(file_content) => toml::from_str(&file_content).map_err(Into::into),
+		Err(err) if err.kind() == std::io::ErrorKind::NotFound =>
+		{
+			let config = Config::default();
+			std::fs::write("config.toml", toml::to_string_pretty(&config)?)?;
+			Ok(config)
+		}
+		Err(err) => Err(Box::new(err)),
+	}
 }
 
 fn on_ready(ctx: &serenity::Context, ready: &Ready, framework: FrameworkContext<'_, Data, Error>)
@@ -156,4 +174,19 @@ fn error_embed(description: impl Into<String>) -> CreateEmbed
 			CreateEmbedFooter::new("If you think this is a bug, contact my mama, Jolkert!")
 				.icon_url("https://jolkert.dev/img/icon_small.png"),
 		)
+}
+
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+struct Config
+{
+	prefix: String,
+}
+impl Default for Config
+{
+	fn default() -> Self
+	{
+		Self {
+			prefix: String::from("$"),
+		}
+	}
 }
