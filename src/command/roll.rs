@@ -1,5 +1,3 @@
-use std::{collections::HashMap, hash::Hash};
-
 use poise::{
 	serenity_prelude::{CreateAllowedMentions, CreateEmbed, CreateEmbedFooter, Mentionable},
 	CreateReply,
@@ -79,17 +77,5 @@ fn embed_from_roll(
 			"Trying to interpret `{input_string}` failed!\n*{}*",
 			err.to_string().replace('*', r"\*")
 		)),
-	}
-}
-
-trait InsertPair<K, V>
-{
-	fn insert_pair(&mut self, pair: (K, V)) -> Option<V>;
-}
-impl<K: Eq + Hash, V> InsertPair<K, V> for HashMap<K, V>
-{
-	fn insert_pair(&mut self, pair: (K, V)) -> Option<V>
-	{
-		self.insert(pair.0, pair.1)
 	}
 }
