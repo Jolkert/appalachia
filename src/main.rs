@@ -13,7 +13,10 @@ use poise::{
 	FrameworkContext,
 };
 
-struct Data;
+struct Data
+{
+	status: Option<String>,
+}
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
 
@@ -23,6 +26,9 @@ const ERROR_COLOR: Color = Color::new(0xe59a9a);
 #[tokio::main]
 async fn main() -> Result<(), Error>
 {
+	dotenv::dotenv()?;
+	env_logger::init();
+
 	let token = std::fs::read_to_string("token").expect("could not find token file!");
 	let intents = GatewayIntents::all();
 
@@ -44,7 +50,7 @@ async fn main() -> Result<(), Error>
 			},
 			pre_command: |ctx| {
 				Box::pin(async move {
-					println!(
+					log::info!(
 						"{} ({}) running [{}]",
 						ctx.author().name,
 						ctx.author().id,
@@ -80,7 +86,9 @@ async fn main() -> Result<(), Error>
 					GuildId::from(1094129348455436368),
 				)
 				.await?;
-				Ok(Data)
+				Ok(Data {
+					status: config.status,
+				})
 			})
 		})
 		.build();
@@ -110,19 +118,23 @@ fn load_config() -> Result<Config, Error>
 
 fn on_ready(ctx: &serenity::Context, ready: &Ready, framework: FrameworkContext<'_, Data, Error>)
 {
-	println!("Appalachia v{}", env!("CARGO_PKG_VERSION"));
-	println!("Discord API v{}", ready.version);
-	println!("Loaded {} commands", framework.options.commands.len());
+	log::info!("Appalachia v{}", env!("CARGO_PKG_VERSION"));
+	log::info!("Discord API v{}", ready.version);
+	log::info!("Loaded {} commands", framework.options.commands.len());
 
-	ctx.set_activity(Some(ActivityData::custom(
-		"\u{1f3f3}\u{200d}\u{26a7} Trans rights!",
-	)));
-	println!("{} online!", ready.user.name);
+	ctx.set_activity(
+		framework
+			.user_data
+			.status
+			.as_ref()
+			.map(ActivityData::custom),
+	);
+	log::info!("{} online!", ready.user.name);
 }
 
 fn on_cache_ready(guilds: &[GuildId])
 {
-	println!("Active in {} guilds", guilds.len());
+	log::info!("Active in {} guilds", guilds.len());
 }
 
 async fn respond_to(
@@ -180,13 +192,15 @@ fn error_embed(description: impl Into<String>) -> CreateEmbed
 struct Config
 {
 	prefix: String,
+	status: Option<String>,
 }
 impl Default for Config
 {
 	fn default() -> Self
 	{
 		Self {
-			prefix: String::from("$"),
+			prefix: String::from("~"),
+			status: None,
 		}
 	}
 }
