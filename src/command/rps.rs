@@ -10,7 +10,7 @@ use poise::{
 use strum::IntoEnumIterator;
 use strum_macros::{EnumIter, IntoStaticStr};
 
-use crate::{Context, Error};
+use crate::{Context, Error, Respond};
 
 /// Challenge another user to a game of Rock, Paper, Scissors
 #[poise::command(slash_command, prefix_command, guild_only)]
@@ -94,12 +94,12 @@ async fn await_accept(
 
 		if interaction.user.id != opponent.user.id
 		{
-			crate::respond_ephemeral(
-				interaction,
-				ctx,
-				crate::error_embed("Only the challenged user may accept or decline!"),
-			)
-			.await?;
+			interaction
+				.respond_ephemeral(
+					ctx,
+					crate::error_embed("Only the challenged user may accept or decline!"),
+				)
+				.await?;
 
 			continue;
 		}
@@ -108,32 +108,32 @@ async fn await_accept(
 		{
 			"rps-accept" =>
 			{
-				crate::respond_to(
-					interaction,
-					ctx,
-					CreateEmbed::new()
-						.title("Challenge accepted!")
-						.description(format!("{} accepts the challenge!", opponent.mention()))
-						.color(crate::DEFAULT_COLOR),
-				)
-				.await?;
+				interaction
+					.respond(
+						ctx,
+						CreateEmbed::new()
+							.title("Challenge accepted!")
+							.description(format!("{} accepts the challenge!", opponent.mention()))
+							.color(crate::DEFAULT_COLOR),
+					)
+					.await?;
 
 				break true;
 			}
 			"rps-deny" =>
 			{
-				crate::respond_to(
-					interaction,
-					ctx,
-					CreateEmbed::new()
-						.title("Challenge declined!")
-						.description(format!(
-							"{} does not accept the challenge",
-							opponent.mention()
-						))
-						.color(crate::DEFAULT_COLOR),
-				)
-				.await?;
+				interaction
+					.respond(
+						ctx,
+						CreateEmbed::new()
+							.title("Challenge declined!")
+							.description(format!(
+								"{} does not accept the challenge",
+								opponent.mention()
+							))
+							.color(crate::DEFAULT_COLOR),
+					)
+					.await?;
 
 				break false;
 			}
@@ -234,23 +234,20 @@ async fn await_selections(
 		let Some(side) = game.side_by_id(interaction.user.id)
 		else
 		{
-			crate::respond_ephemeral(
-				interaction,
-				ctx,
-				crate::error_embed("Only the person who was challenged is allowed to respond!"),
-			)
-			.await?;
+			interaction
+				.respond_ephemeral(
+					ctx,
+					crate::error_embed("Only the person who was challenged is allowed to respond!"),
+				)
+				.await?;
 			continue;
 		};
 
 		if game[side].has_selected()
 		{
-			crate::respond_ephemeral(
-				interaction,
-				ctx,
-				crate::error_embed("You have already selected!"),
-			)
-			.await?;
+			interaction
+				.respond_ephemeral(ctx, crate::error_embed("You have already selected!"))
+				.await?;
 			continue;
 		}
 
@@ -263,15 +260,15 @@ async fn await_selections(
 		};
 		game[side].select(selection);
 
-		crate::respond_ephemeral(
-			interaction,
-			ctx,
-			CreateEmbed::new()
-				.title("Selection made!")
-				.description(format!("You have selected {selection}"))
-				.color(crate::DEFAULT_COLOR),
-		)
-		.await?;
+		interaction
+			.respond_ephemeral(
+				ctx,
+				CreateEmbed::new()
+					.title("Selection made!")
+					.description(format!("You have selected {selection}"))
+					.color(crate::DEFAULT_COLOR),
+			)
+			.await?;
 
 		if let (Some(challenger), Some(opponent)) = game.selections()
 		{

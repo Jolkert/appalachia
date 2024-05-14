@@ -137,14 +137,16 @@ fn on_cache_ready(guilds: &[GuildId])
 	log::info!("Active in {} guilds", guilds.len());
 }
 
-async fn respond_to(
-	interaction: ComponentInteraction,
-	ctx: Context<'_>,
-	embed: CreateEmbed,
-) -> Result<(), Error>
+trait Respond
 {
-	interaction
-		.create_response(
+	async fn respond(self, ctx: Context<'_>, embed: CreateEmbed) -> Result<(), Error>;
+	async fn respond_ephemeral(self, ctx: Context<'_>, embed: CreateEmbed) -> Result<(), Error>;
+}
+impl Respond for ComponentInteraction
+{
+	async fn respond(self, ctx: Context<'_>, embed: CreateEmbed) -> Result<(), Error>
+	{
+		self.create_response(
 			ctx,
 			CreateInteractionResponse::Message(
 				CreateInteractionResponseMessage::new()
@@ -153,17 +155,12 @@ async fn respond_to(
 			),
 		)
 		.await?;
-	Ok(())
-}
+		Ok(())
+	}
 
-async fn respond_ephemeral(
-	interaction: ComponentInteraction,
-	ctx: Context<'_>,
-	embed: CreateEmbed,
-) -> Result<(), Error>
-{
-	interaction
-		.create_response(
+	async fn respond_ephemeral(self, ctx: Context<'_>, embed: CreateEmbed) -> Result<(), Error>
+	{
+		self.create_response(
 			ctx,
 			CreateInteractionResponse::Message(
 				CreateInteractionResponseMessage::new()
@@ -173,7 +170,8 @@ async fn respond_ephemeral(
 			),
 		)
 		.await?;
-	Ok(())
+		Ok(())
+	}
 }
 
 fn error_embed(description: impl Into<String>) -> CreateEmbed
