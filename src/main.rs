@@ -3,7 +3,14 @@
 #![feature(let_chains)]
 
 mod command;
+mod data;
 
+use std::{
+	path::PathBuf,
+	sync::{Arc, Mutex, MutexGuard},
+};
+
+use data::DataManager;
 use poise::{
 	serenity_prelude::{
 		self as serenity, ActivityData, ClientBuilder, Color, ComponentInteraction,
@@ -16,6 +23,16 @@ use poise::{
 struct Data
 {
 	status: Option<String>,
+	data_manager: Arc<Mutex<DataManager>>,
+}
+impl Data
+{
+	pub fn acquire_lock(&self) -> MutexGuard<DataManager>
+	{
+		self.data_manager
+			.lock()
+			.expect("Unable to acquire lock on data!")
+	}
 }
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
@@ -41,6 +58,7 @@ async fn main() -> Result<(), Error>
 				command::flip(),
 				command::rps(),
 				command::random(),
+				command::autorole(),
 			],
 			prefix_options: poise::PrefixFrameworkOptions {
 				prefix: Some(config.prefix),
@@ -56,6 +74,11 @@ async fn main() -> Result<(), Error>
 						ctx.author().id,
 						ctx.command().name
 					);
+				})
+			},
+			post_command: |ctx| {
+				Box::pin(async move {
+					ctx.data().acquire_lock().sync();
 				})
 			},
 			event_handler: |ctx, event, framework, _data| {
@@ -88,6 +111,9 @@ async fn main() -> Result<(), Error>
 				.await?;
 				Ok(Data {
 					status: config.status,
+					data_manager: Arc::new(Mutex::new(DataManager::load_or_create_from_dir(
+						config.data_directory,
+					))),
 				})
 			})
 		})
@@ -189,7 +215,13 @@ fn error_embed(description: impl Into<String>) -> CreateEmbed
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 struct Config
 {
+	#[serde(default = "Config::default_prefix")]
 	prefix: String,
+
+	#[serde(default = "Config::default_data_dir")]
+	data_directory: PathBuf,
+
+	#[serde(default)]
 	status: Option<String>,
 }
 impl Default for Config
@@ -197,8 +229,23 @@ impl Default for Config
 	fn default() -> Self
 	{
 		Self {
-			prefix: String::from("~"),
+			prefix: Self::default_prefix(),
+			data_directory: Self::default_data_dir(),
 			status: None,
 		}
+	}
+}
+impl Config
+{
+	fn default_prefix() -> String
+	{
+		String::from("~")
+	}
+	fn default_data_dir() -> PathBuf
+	{
+		dirs::home_dir().map_or_else(
+			|| PathBuf::from("./data"),
+			|home_dir| home_dir.join(PathBuf::from(".appalachia/data")),
+		)
 	}
 }
