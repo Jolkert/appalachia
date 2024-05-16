@@ -11,6 +11,7 @@ use crate::{data::GuildData, Context, Error};
 	slash_command,
 	guild_only,
 	required_permissions = "MANAGE_GUILD",
+	required_bot_permissions = "MANAGE_ROLES",
 	subcommands("set", "clear", "check")
 )]
 pub async fn autorole(_: Context<'_>) -> Result<(), Error>
@@ -22,7 +23,8 @@ pub async fn autorole(_: Context<'_>) -> Result<(), Error>
 	prefix_command,
 	slash_command,
 	guild_only,
-	required_permissions = "MANAGE_GUILD"
+	required_permissions = "MANAGE_GUILD",
+	required_bot_permissions = "MANAGE_ROLES"
 )]
 pub async fn set(ctx: Context<'_>, role: Role) -> Result<(), Error>
 {
@@ -45,7 +47,8 @@ pub async fn set(ctx: Context<'_>, role: Role) -> Result<(), Error>
 	prefix_command,
 	slash_command,
 	guild_only,
-	required_permissions = "MANAGE_GUILD"
+	required_permissions = "MANAGE_GUILD",
+	required_bot_permissions = "MANAGE_ROLES"
 )]
 pub async fn clear(ctx: Context<'_>) -> Result<(), Error>
 {
@@ -71,7 +74,8 @@ pub async fn clear(ctx: Context<'_>) -> Result<(), Error>
 	prefix_command,
 	slash_command,
 	guild_only,
-	required_permissions = "MANAGE_GUILD"
+	required_permissions = "MANAGE_GUILD ",
+	required_bot_permissions = "MANAGE_ROLES"
 )]
 pub async fn check(ctx: Context<'_>) -> Result<(), Error>
 {

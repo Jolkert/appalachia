@@ -10,12 +10,12 @@ use std::{
 	sync::{Arc, Mutex, MutexGuard},
 };
 
-use data::DataManager;
+use data::{DataManager, GuildData};
 use poise::{
 	serenity_prelude::{
-		self as serenity, ActivityData, ClientBuilder, Color, ComponentInteraction,
+		self as serenity, ActivityData, CacheHttp, ClientBuilder, Color, ComponentInteraction,
 		CreateAllowedMentions, CreateEmbed, CreateEmbedFooter, CreateInteractionResponse,
-		CreateInteractionResponseMessage, FullEvent, GatewayIntents, GuildId, Ready,
+		CreateInteractionResponseMessage, FullEvent, GatewayIntents, GuildId, Member, Ready,
 	},
 	FrameworkContext,
 };
@@ -81,7 +81,7 @@ async fn main() -> Result<(), Error>
 					ctx.data().acquire_lock().sync();
 				})
 			},
-			event_handler: |ctx, event, framework, _data| {
+			event_handler: |ctx, event, framework, data| {
 				Box::pin(async move {
 					match event
 					{
@@ -90,6 +90,10 @@ async fn main() -> Result<(), Error>
 							on_ready(ctx, data_about_bot, framework);
 						}
 						FullEvent::CacheReady { guilds } => on_cache_ready(guilds),
+						FullEvent::GuildMemberAddition { new_member } =>
+						{
+							add_autorole(ctx, new_member, data).await?;
+						}
 						_ => (),
 					}
 
@@ -106,7 +110,7 @@ async fn main() -> Result<(), Error>
 				poise::builtins::register_in_guild(
 					ctx,
 					&framework.options().commands,
-					GuildId::from(1094129348455436368),
+					GuildId::from(390334803972587530),
 				)
 				.await?;
 				Ok(Data {
@@ -161,6 +165,23 @@ fn on_ready(ctx: &serenity::Context, ready: &Ready, framework: FrameworkContext<
 fn on_cache_ready(guilds: &[GuildId])
 {
 	log::info!("Active in {} guilds", guilds.len());
+}
+
+async fn add_autorole(ctx: &serenity::Context, member: &Member, data: &Data) -> Result<(), Error>
+{
+	let role_id = {
+		data.acquire_lock()
+			.guild_data(member.guild_id)
+			.and_then(GuildData::autorole)
+			.copied()
+	};
+
+	if let Some(role_id) = role_id
+	{
+		member.add_role(ctx.http(), role_id).await?;
+	}
+
+	Ok(())
 }
 
 trait Respond
