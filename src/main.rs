@@ -17,7 +17,7 @@ use poise::{
 		CreateAllowedMentions, CreateEmbed, CreateEmbedFooter, CreateInteractionResponse,
 		CreateInteractionResponseMessage, FullEvent, GatewayIntents, GuildId, Member, Ready,
 	},
-	FrameworkContext,
+	Command, FrameworkContext,
 };
 
 struct Data
@@ -105,14 +105,8 @@ async fn main() -> Result<(), Error>
 		})
 		.setup(|ctx, _ready, framework| {
 			Box::pin(async move {
-				// TODO: register globally in final build. guild is faster for tests
-				// -morgan 2024-01-15
-				poise::builtins::register_in_guild(
-					ctx,
-					&framework.options().commands,
-					GuildId::from(390334803972587530),
-				)
-				.await?;
+				register_commands(ctx, &framework.options().commands).await?;
+
 				Ok(Data {
 					status: config.status,
 					data_manager: Arc::new(Mutex::new(DataManager::load_or_create_from_dir(
@@ -128,6 +122,29 @@ async fn main() -> Result<(), Error>
 		.await;
 
 	client.unwrap().start().await.unwrap();
+	Ok(())
+}
+
+#[cfg(debug_assertions)]
+async fn register_commands(
+	ctx: &serenity::Context,
+	commands: &[Command<Data, Error>],
+) -> Result<(), Error>
+{
+	poise::builtins::register_in_guild(ctx, commands, GuildId::from(1094129348455436368)).await?;
+	poise::builtins::register_in_guild(ctx, commands, GuildId::from(390334803972587530)).await?;
+	log::info!("Registered commands in guilds");
+	Ok(())
+}
+
+#[cfg(not(debug_assertions))]
+async fn register_commands(
+	ctx: &serenity::Context,
+	commands: &[Command<Data, Error>],
+) -> Result<(), Error>
+{
+	poise::builtins::register_globally(ctx, commands).await?;
+	log::info!("Registered commands globally");
 	Ok(())
 }
 
