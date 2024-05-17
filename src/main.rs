@@ -46,7 +46,8 @@ async fn main() -> Result<(), Error>
 	dotenv::dotenv()?;
 	env_logger::init();
 
-	let token = std::fs::read_to_string("token").expect("could not find token file!");
+	let token =
+		std::fs::read_to_string(config_root().join("token")).expect("could not find token file!");
 	let intents = GatewayIntents::all();
 
 	let config = load_config()?;
@@ -150,7 +151,7 @@ async fn register_commands(
 
 fn load_config() -> Result<Config, Error>
 {
-	match std::fs::read_to_string("config.toml")
+	match std::fs::read_to_string(config_root().join("config.toml"))
 	{
 		Ok(file_content) => toml::from_str(&file_content).map_err(Into::into),
 		Err(err) if err.kind() == std::io::ErrorKind::NotFound =>
@@ -161,6 +162,21 @@ fn load_config() -> Result<Config, Error>
 		}
 		Err(err) => Err(Box::new(err)),
 	}
+}
+
+#[cfg(debug_assertions)]
+fn config_root() -> PathBuf
+{
+	PathBuf::from("./")
+}
+
+#[cfg(not(debug_assertions))]
+fn config_root() -> PathBuf
+{
+	dirs::config_dir().map_or_else(
+		|| PathBuf::from("./"),
+		|config_dir| config_dir.join("appalachia/"),
+	)
 }
 
 fn on_ready(ctx: &serenity::Context, ready: &Ready, framework: FrameworkContext<'_, Data, Error>)
@@ -281,9 +297,9 @@ impl Config
 	}
 	fn default_data_dir() -> PathBuf
 	{
-		dirs::home_dir().map_or_else(
+		dirs::config_dir().map_or_else(
 			|| PathBuf::from("./data"),
-			|home_dir| home_dir.join(PathBuf::from(".appalachia/data")),
+			|config_dir| config_dir.join(PathBuf::from("appalachia/data")),
 		)
 	}
 }
