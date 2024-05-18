@@ -6,6 +6,7 @@ use poise::{
 use crate::{data::GuildData, Context, Error};
 
 #[allow(clippy::unused_async)]
+/// Modify the automatically assigned role in the server
 #[poise::command(
 	prefix_command,
 	slash_command,
@@ -19,6 +20,7 @@ pub async fn autorole(_: Context<'_>) -> Result<(), Error>
 	Ok(())
 }
 
+/// Change which role is automatically assigned
 #[poise::command(
 	prefix_command,
 	slash_command,
@@ -26,7 +28,10 @@ pub async fn autorole(_: Context<'_>) -> Result<(), Error>
 	required_permissions = "MANAGE_GUILD",
 	required_bot_permissions = "MANAGE_ROLES"
 )]
-pub async fn set(ctx: Context<'_>, role: Role) -> Result<(), Error>
+pub async fn set(
+	ctx: Context<'_>,
+	#[description = "The new role to be automatically assigned"] role: Role,
+) -> Result<(), Error>
 {
 	ctx.data()
 		.acquire_lock()
@@ -43,6 +48,7 @@ pub async fn set(ctx: Context<'_>, role: Role) -> Result<(), Error>
 	Ok(())
 }
 
+/// Clear the current automatically assigned role
 #[poise::command(
 	prefix_command,
 	slash_command,
@@ -70,6 +76,7 @@ pub async fn clear(ctx: Context<'_>) -> Result<(), Error>
 	Ok(())
 }
 
+/// Show which role is currently being automatically assigned to new members
 #[poise::command(
 	prefix_command,
 	slash_command,

@@ -14,11 +14,15 @@ pub async fn random(_: Context<'_>) -> Result<(), Error>
 	Ok(())
 }
 
+/// Generate a random user from the current server
 #[poise::command(prefix_command, slash_command, guild_only)]
 pub async fn user(
 	ctx: Context<'_>,
+	#[description = "Whether or not you should be considered for being potentially pulled (True by default)"]
 	include_self: Option<bool>,
-	#[flag] include_bots: bool,
+	#[description = "Whether or not bots should be considered for being potentially pulled (False by default)"]
+	#[flag]
+	include_bots: bool,
 ) -> Result<(), Error>
 {
 	let include_self = include_self.unwrap_or(true);

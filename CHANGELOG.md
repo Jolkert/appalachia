@@ -1,3 +1,7 @@
+# v0.1.2
+## Bugfixes
+- Added descriptions for `/random user` and `/autorole` commands and their arguments
+
 # v0.1.1
 ## Bugfixes
 - No longer crashes when no `.env` file is present
