@@ -307,9 +307,6 @@ impl Config
 	}
 	fn default_data_dir() -> PathBuf
 	{
-		dirs::config_dir().map_or_else(
-			|| PathBuf::from("./data"),
-			|config_dir| config_dir.join(PathBuf::from("appalachia/data")),
-		)
+		config_root().join("data/")
 	}
 }
