@@ -1,7 +1,15 @@
 [package]
-name = "appalachia-rs"
+name = "appalachia"
 version = "0.1.0"
+authors = ["jolkert"]
 edition = "2021"
+description = "a discord bot for personal use"
+homepage = "jolkert.dev/appalachia"
+repository = "https://github.com/jolkert/appalachia"
+license = "MIT OR Apache-2.0"
+exclude = ["bacon.toml", ".vscode/", "CHANGELOG.md"]
+categories = ["command-line-utilities"]
+keywords = ["discord", "bot", "appalachia", "rock-paper-scissors", "dice"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

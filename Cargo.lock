@@ -91,7 +91,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "appalachia-rs"
+name = "appalachia"
 version = "0.1.0"
 dependencies = [
  "dirs",
