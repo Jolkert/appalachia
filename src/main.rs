@@ -151,13 +151,15 @@ async fn register_commands(
 
 fn load_config() -> Result<Config, Error>
 {
-	match std::fs::read_to_string(config_root().join("config.toml"))
+	let config_file_path = config_root().join("config.toml");
+
+	match std::fs::read_to_string(&config_file_path)
 	{
 		Ok(file_content) => toml::from_str(&file_content).map_err(Into::into),
 		Err(err) if err.kind() == std::io::ErrorKind::NotFound =>
 		{
 			let config = Config::default();
-			std::fs::write("config.toml", toml::to_string_pretty(&config)?)?;
+			std::fs::write(config_file_path, toml::to_string_pretty(&config)?)?;
 			Ok(config)
 		}
 		Err(err) => Err(Box::new(err)),
@@ -173,10 +175,12 @@ fn config_root() -> PathBuf
 #[cfg(not(debug_assertions))]
 fn config_root() -> PathBuf
 {
-	dirs::config_dir().map_or_else(
+	let dir = dirs::config_dir().map_or_else(
 		|| PathBuf::from("./"),
 		|config_dir| config_dir.join("appalachia/"),
-	)
+	);
+	std::fs::create_dir_all(&dir).expect("Failed to create config directory!");
+	dir
 }
 
 fn on_ready(ctx: &serenity::Context, ready: &Ready, framework: FrameworkContext<'_, Data, Error>)
