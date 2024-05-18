@@ -46,11 +46,13 @@ async fn main() -> Result<(), Error>
 	dotenv::dotenv()?;
 	env_logger::init();
 
-	let token =
-		std::fs::read_to_string(config_root().join("token")).expect("could not find token file!");
-	let intents = GatewayIntents::all();
-
 	let config = load_config()?;
+	if config.token.is_empty()
+	{
+		log::error!("No token specified!");
+		panic!("No token specified!");
+	}
+	let intents = GatewayIntents::all();
 
 	let framework = poise::Framework::builder()
 		.options(poise::FrameworkOptions {
@@ -118,7 +120,7 @@ async fn main() -> Result<(), Error>
 		})
 		.build();
 
-	let client = ClientBuilder::new(token, intents)
+	let client = ClientBuilder::new(config.token, intents)
 		.framework(framework)
 		.await;
 
@@ -273,6 +275,9 @@ fn error_embed(description: impl Into<String>) -> CreateEmbed
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 struct Config
 {
+	#[serde(default)]
+	token: String,
+
 	#[serde(default = "Config::default_prefix")]
 	prefix: String,
 
@@ -287,6 +292,7 @@ impl Default for Config
 	fn default() -> Self
 	{
 		Self {
+			token: String::default(),
 			prefix: Self::default_prefix(),
 			data_directory: Self::default_data_dir(),
 			status: None,
