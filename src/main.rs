@@ -41,12 +41,21 @@ const DEFAULT_COLOR: Color = Color::new(0xa9e5e5);
 const ERROR_COLOR: Color = Color::new(0xe59a9a);
 
 #[tokio::main]
-async fn main() -> Result<(), Error>
+async fn main()
 {
-	dotenv::dotenv()?;
+	let dot_env_result = dotenv::dotenv();
 	env_logger::init();
 
-	let config = load_config()?;
+	if let Err(e) = dot_env_result
+		&& !e.not_found()
+	{
+		log::error!("Error reading .env file {e}");
+	}
+
+	let config = load_config().unwrap_or_else(|err| {
+		log::error!("Could not read config file! {err}");
+		panic!("Could not read config file! {err}")
+	});
 	if config.token.is_empty()
 	{
 		log::error!("No token specified!");
@@ -125,7 +134,6 @@ async fn main() -> Result<(), Error>
 		.await;
 
 	client.unwrap().start().await.unwrap();
-	Ok(())
 }
 
 #[cfg(debug_assertions)]
