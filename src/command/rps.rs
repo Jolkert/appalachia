@@ -50,7 +50,7 @@ pub async fn rps(
 				))
 				.color(crate::DEFAULT_COLOR)
 				.footer(CreateEmbedFooter::new(
-					"\u{2757} Interctions will only be valid an hour of this message being sent",
+					"\u{2757} Interctions will only be valid within an hour of this message being sent",
 				)),
 		)
 		.components(vec![CreateActionRow::Buttons(vec![
@@ -154,7 +154,7 @@ async fn process_selections(ctx: Context<'_>, opponent: &Member, first_to: u32)
 				.description("Pick rock, paper, or, scissors")
 				.color(crate::DEFAULT_COLOR)
 				.footer(CreateEmbedFooter::new(
-					"\u{2757} Interctions will only be valid an hour of this message being sent",
+					"\u{2757} Interctions will only be valid within an hour of this message being sent",
 				)),
 		)
 		.components(vec![CreateActionRow::Buttons(
