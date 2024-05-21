@@ -8,11 +8,15 @@
 
 ## Commands
 ### Rock Paper Scissors `/rps`
-Using `/rps` you can challenge other users in a server to a rock paper 
+- Using `/rps challenge` you can challenge other users in a server to a rock paper 
 scissors match. If the opponent accpets, you play by interacting with buttons
 on a message the bot will send in the channel the challenge was issued from. 
 If you specify an integer in the `first_to` field, the game will continue 
 until either player reaches the specified amount of wins.
+- Using `/rps leaderboard` you can view the leaderboard for current server. The bot
+keeps track of the wins and losses of each member of the server who has played rock
+paper scissors at least once in the server. You can also specify a specific member
+to view the scores of
 
 ### Dice Rolling `/roll`
 Using `/roll` you can enter an expression in
@@ -38,7 +42,6 @@ To use this command:
 - The bot must have the "Manage Roles" permission
 
 ## Planned Features
-- Per-server/global Rock Paper Scissors leaderboards
 - `/random user` filter for only including users in the current voice channel
 - Custom welcome messages
 - `/quote` command to pull a random message from a channel set per-server

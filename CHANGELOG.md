@@ -1,3 +1,7 @@
+# v0.2.0
+## Commands
+- Added rock paper scissors leaderboard `/rps leaderboard`
+
 # v0.1.2
 ## Bugfixes
 - Added descriptions for `/random user` and `/autorole` commands and their arguments
