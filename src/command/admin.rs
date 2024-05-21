@@ -35,6 +35,7 @@ pub async fn set(
 {
 	ctx.data()
 		.acquire_lock()
+		.await
 		.guild_data_mut(ctx.guild_id().unwrap())
 		.set_autorole(role.id);
 
@@ -60,6 +61,7 @@ pub async fn clear(ctx: Context<'_>) -> Result<(), Error>
 {
 	ctx.data()
 		.acquire_lock()
+		.await
 		.guild_data_mut(ctx.guild_id().unwrap())
 		.set_autorole(None);
 
@@ -91,14 +93,12 @@ pub async fn check(ctx: Context<'_>) -> Result<(), Error>
 		(guild.id, guild.name.clone())
 	};
 
-	let role_id = ctx
+	if let Some(role_id) = ctx
 		.data()
 		.acquire_lock()
+		.await
 		.guild_data(guild_id)
 		.and_then(GuildData::autorole)
-		.copied();
-
-	if let Some(role_id) = role_id
 	{
 		ctx.send(
 			CreateReply::default()

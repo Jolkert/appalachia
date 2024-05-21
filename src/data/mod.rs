@@ -1,6 +1,12 @@
+mod guild_data;
+mod rps_leaderboard;
+
+pub use guild_data::*;
+pub use rps_leaderboard::*;
+
 use std::{collections::HashMap, path::PathBuf};
 
-use poise::serenity_prelude::{GuildId, RoleId};
+use poise::serenity_prelude::GuildId;
 
 #[derive(Debug)]
 pub struct DataManager
@@ -50,6 +56,7 @@ impl DataManager
 
 		self.guild_data.entry(guild_id).or_default()
 	}
+
 	pub fn sync(&mut self)
 	{
 		std::fs::write(
@@ -59,25 +66,6 @@ impl DataManager
 		)
 		.expect("Unable to write to guild data file!");
 		self.unsynced = false;
-	}
-}
-
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-pub struct GuildData
-{
-	#[serde(default)]
-	autorole: Option<RoleId>,
-}
-impl GuildData
-{
-	pub fn autorole(&self) -> Option<&RoleId>
-	{
-		self.autorole.as_ref()
-	}
-
-	pub fn set_autorole(&mut self, role: impl Into<Option<RoleId>>)
-	{
-		self.autorole = role.into();
 	}
 }
 

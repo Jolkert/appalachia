@@ -5,16 +5,15 @@
 mod command;
 mod data;
 
-use std::{
-	path::PathBuf,
-	sync::{Arc, Mutex, MutexGuard},
-};
+use std::{path::PathBuf, sync::Arc};
 
 use data::{DataManager, GuildData};
 use poise::{
 	serenity_prelude::{
-		self as serenity, ActivityData, CacheHttp, ClientBuilder, Color, ComponentInteraction,
-		CreateAllowedMentions, CreateEmbed, CreateEmbedFooter, CreateInteractionResponse,
+		self as serenity,
+		futures::lock::{Mutex, MutexGuard},
+		ActivityData, CacheHttp, ClientBuilder, Color, ComponentInteraction, CreateAllowedMentions,
+		CreateEmbed, CreateEmbedFooter, CreateInteractionResponse,
 		CreateInteractionResponseMessage, FullEvent, GatewayIntents, GuildId, Member, Ready,
 	},
 	Command, FrameworkContext,
@@ -27,11 +26,9 @@ struct Data
 }
 impl Data
 {
-	pub fn acquire_lock(&self) -> MutexGuard<DataManager>
+	pub async fn acquire_lock(&self) -> MutexGuard<DataManager>
 	{
-		self.data_manager
-			.lock()
-			.expect("Unable to acquire lock on data!")
+		self.data_manager.lock().await
 	}
 }
 type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -90,7 +87,7 @@ async fn main()
 			},
 			post_command: |ctx| {
 				Box::pin(async move {
-					ctx.data().acquire_lock().sync();
+					ctx.data().acquire_lock().await.sync();
 				})
 			},
 			event_handler: |ctx, event, framework, data| {
@@ -218,6 +215,7 @@ async fn add_autorole(ctx: &serenity::Context, member: &Member, data: &Data) -> 
 {
 	let role_id = {
 		data.acquire_lock()
+			.await
 			.guild_data(member.guild_id)
 			.and_then(GuildData::autorole)
 			.copied()

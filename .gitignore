@@ -1,5 +1,5 @@
 /.env
 /target
 token
-config.toml
-data/
+/config.toml
+/data/
