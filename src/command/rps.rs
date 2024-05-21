@@ -390,39 +390,29 @@ impl StringLengths
 	pub fn draw_line(&self, horizontal: char, vertical: char) -> String
 	{
 		// ive done my absolute best to not make this the worst thing ever -morgan 2024-05-20
-		let mut line_string = String::new();
+		// ok i think its a bit better now? not by a ton but stil -morgan 2024-05-21
+		self.spacings_iterator()
+			.enumerate()
+			.fold(String::new(), |mut line_string, (i, times)| {
+				repeat!(times + 1 + usize::from((1..=5).contains(&i)), {
+					line_string.push(horizontal);
+				});
+				line_string.push(vertical);
+				line_string
+			}) + "\n"
+	}
 
-		repeat!(self.rank + 1, {
-			line_string.push(horizontal);
-		});
-		line_string.push(vertical);
-
-		repeat!(self.name + 2, {
-			line_string.push(horizontal);
-		});
-		line_string.push(vertical);
-
-		repeat!(self.elo + 2, {
-			line_string.push(horizontal);
-		});
-		line_string.push(vertical);
-
-		repeat!(self.wins + 2, {
-			line_string.push(horizontal);
-		});
-		line_string.push(vertical);
-
-		repeat!(self.losses + 2, {
-			line_string.push(horizontal);
-		});
-		line_string.push(vertical);
-
-		repeat!(self.winrate + 1, {
-			line_string.push(horizontal);
-		});
-		line_string.push('\n');
-
-		line_string
+	fn spacings_iterator(&self) -> impl Iterator<Item = usize>
+	{
+		[
+			self.rank,
+			self.name,
+			self.elo,
+			self.wins,
+			self.losses,
+			self.winrate,
+		]
+		.into_iter()
 	}
 }
 
