@@ -1,3 +1,8 @@
+# v0.2.1
+## Bugfixes
+- Various rock paper scissors leaderboard misalignments fixed up
+- Now using `unidecode` to normalize all nicknames to ascii so alignment doesnt break. Some things might still break tho. no promises
+
 # v0.2.0
 ## Commands
 - Added rock paper scissors leaderboard `/rps leaderboard`

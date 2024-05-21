@@ -225,7 +225,7 @@ pub async fn leaderboard(
 			scores.push((guild.member(ctx.http(), id).await?, rank, score));
 		}
 
-		let string_lengths = get_max_lengths(&scores).cap_name_at(25);
+		let string_lengths = get_max_lengths(&scores).cap_name_at(32);
 
 		let mut leaderboard_string = String::from("```");
 
@@ -255,7 +255,7 @@ pub async fn leaderboard(
 				leaderboard_string,
 				string_lengths,
 				rank,
-				member.display_name(),
+				unidecode::unidecode(member.display_name()),
 				score.elo,
 				score.wins,
 				score.losses,
@@ -343,7 +343,7 @@ impl StringLengths
 	}
 	pub fn set_name(&mut self, name: &str)
 	{
-		let new = name.len();
+		let new = unidecode::unidecode(name).len();
 		if new > self.name
 		{
 			self.name = new;
@@ -380,7 +380,7 @@ impl StringLengths
 	{
 		// one for each digit, one for the decimal point, and rounded to 4 places;
 		// in theory, this number should never exceed 6 but just in case -morgan 2024-05-20
-		let new = (winrate.abs().log10().floor() as usize) + 5;
+		let new = format!("{winrate:.4}").trim_start_matches('0').len();
 		if new > self.winrate
 		{
 			self.winrate = new;
@@ -394,10 +394,13 @@ impl StringLengths
 		self.spacings_iterator()
 			.enumerate()
 			.fold(String::new(), |mut line_string, (i, times)| {
-				repeat!(times + 1 + usize::from((1..=5).contains(&i)), {
+				repeat!(times + 1 + usize::from((1..=4).contains(&i)), {
 					line_string.push(horizontal);
 				});
-				line_string.push(vertical);
+				if i < 5
+				{
+					line_string.push(vertical);
+				}
 				line_string
 			}) + "\n"
 	}
