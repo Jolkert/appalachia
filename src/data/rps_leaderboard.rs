@@ -3,6 +3,7 @@ use std::{cmp::Ordering, collections::HashMap};
 use poise::serenity_prelude::UserId;
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+#[serde(transparent)]
 pub struct Leaderboard
 {
 	map: HashMap<UserId, Score>,
