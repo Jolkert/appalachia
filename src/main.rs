@@ -16,7 +16,7 @@ use poise::{
 		CreateEmbed, CreateEmbedFooter, CreateInteractionResponse,
 		CreateInteractionResponseMessage, FullEvent, GatewayIntents, GuildId, Member, Ready,
 	},
-	Command, FrameworkContext,
+	Command, CreateReply, FrameworkContext,
 };
 
 struct Data
@@ -67,7 +67,9 @@ async fn main()
 				command::flip(),
 				command::rps(),
 				command::random(),
-				command::autorole(),
+				command::quote(),
+				command::admin::autorole(),
+				command::admin::quote_channel(),
 			],
 			prefix_options: poise::PrefixFrameworkOptions {
 				prefix: Some(config.prefix),
@@ -262,6 +264,27 @@ impl Respond for ComponentInteraction
 			),
 		)
 		.await?;
+		Ok(())
+	}
+}
+
+trait Reply
+{
+	async fn reply_error(self, error_text: String) -> Result<(), Error>;
+}
+impl Reply for Context<'_>
+{
+	async fn reply_error(self, error_text: String) -> Result<(), Error>
+	{
+		self.send(
+			CreateReply::default()
+				.embed(crate::error_embed(error_text))
+				.reply(true)
+				.allowed_mentions(CreateAllowedMentions::new())
+				.ephemeral(true),
+		)
+		.await?;
+
 		Ok(())
 	}
 }
