@@ -1,13 +1,20 @@
 use poise::{
-	serenity_prelude::{futures::StreamExt, CreateEmbed},
+	serenity_prelude::{
+		futures::{StreamExt, TryStreamExt},
+		CreateEmbed, Member, Mentionable,
+	},
 	CreateReply,
 };
 use rand::prelude::SliceRandom;
 
 use crate::{Context, Error, Reply};
 
+/// Pull a random quote from the server's set quotes channel
 #[poise::command(slash_command, prefix_command, guild_only)]
-pub async fn quote(ctx: Context<'_>) -> Result<(), Error>
+pub async fn quote(
+	ctx: Context<'_>,
+	#[description = "The user to find a quote from"] user: Option<Member>,
+) -> Result<(), Error>
 {
 	let guild = ctx.partial_guild().await.unwrap();
 
@@ -20,16 +27,21 @@ pub async fn quote(ctx: Context<'_>) -> Result<(), Error>
 		&& let Some(quote_channel) = guild.channels(ctx).await?.get(quote_channel_id)
 	{
 		ctx.defer().await?;
-		let mut messages_iterator = quote_channel_id.messages_iter(ctx).boxed();
 
-		let mut quotes = Vec::new();
-		while let Some(message) = messages_iterator.next().await.transpose()?
-		{
-			if !message.mentions.is_empty()
-			{
-				quotes.push(message);
-			}
-		}
+		let quotes = quote_channel_id
+			.messages_iter(ctx)
+			.boxed()
+			.try_filter(|msg| {
+				std::future::ready(
+					!msg.mentions.is_empty()
+						&& (user.is_none()
+							|| user
+								.as_ref()
+								.is_some_and(|usr| msg.mentions_user(&usr.user))),
+				)
+			})
+			.try_collect::<Vec<_>>()
+			.await?;
 
 		if let Some(selected_quote) = {
 			let mut rng = rand::thread_rng();
@@ -67,7 +79,7 @@ pub async fn quote(ctx: Context<'_>) -> Result<(), Error>
 		}
 		else
 		{
-			ctx.reply_error(format!("No quotes found in {}!", quote_channel.name))
+			ctx.reply_error(format!("No quotes found in {}!", quote_channel.mention()))
 				.await?;
 		}
 	}
