@@ -33,6 +33,13 @@ server you are in. You can also specify whether or not bots should be included
 (`false` by default) and whether or not the user who ran the command should be
 included (`true` by default)
 
+### Random Quote Selection `/quote`
+- Using `/quote` you can randomly select a quote (defined as a message which has
+at least one user mention) from the server's designated *quotes channel.*
+Optionally, you can specify a user pull only quotes which mention that user.
+- Using `/quote_channel` you can set which channel is the server's specified
+*quotes channel*
+
 ### Assigning Autoroles `/autorole`
 Using `/autorole` you can set a role to be automatically added to all users
 when they first join the server  
@@ -44,4 +51,3 @@ To use this command:
 ## Planned Features
 - `/random user` filter for only including users in the current voice channel
 - Custom welcome messages
-- `/quote` command to pull a random message from a channel set per-server

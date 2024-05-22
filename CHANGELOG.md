@@ -1,3 +1,9 @@
+# v0.2.2
+## Commands
+- Added quote fetching `/quote` and quote channel setting `/quote_channel`
+    - `/quote` can pull a random message containing a user mention (optionally, mentioning a specfic user) from the designated quotes channel
+    - `/quote_channel` can be used by admins to set which channel `/quote` will pull from in the server
+
 # v0.2.1
 ## Bugfixes
 - Various rock paper scissors leaderboard misalignments fixed up
