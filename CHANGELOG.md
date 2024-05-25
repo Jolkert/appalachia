@@ -1,3 +1,7 @@
+# v0.2.3
+## Commands
+- `/roll` now color-codes rolls based on how good they were relative to the mean
+
 # v0.2.2
 ## Commands
 - Added quote fetching `/quote` and quote channel setting `/quote_channel`
