@@ -1,5 +1,8 @@
+use std::cmp::Ordering;
+
+use palette::{rgb, FromColor, Oklch, Srgb};
 use poise::{
-	serenity_prelude::{CreateAllowedMentions, CreateEmbed, CreateEmbedFooter, Mentionable},
+	serenity_prelude::{Color, CreateAllowedMentions, CreateEmbed, CreateEmbedFooter, Mentionable},
 	CreateReply,
 };
 use saikoro::{error::ParsingError, evaluation::DiceEvaluation};
@@ -53,7 +56,7 @@ fn embed_from_roll(
 				roll.value,
 				ctx.author().mention(),
 			))
-			.color(crate::DEFAULT_COLOR)
+			.color(roll_color(roll))
 			.fields(roll.roll_groups.iter().map(|group| {
 				(
 					format!("{}d{}", group.len(), group.faces),
@@ -78,4 +81,34 @@ fn embed_from_roll(
 			err.to_string().replace('*', r"\*")
 		)),
 	}
+}
+
+fn roll_color(roll: &DiceEvaluation) -> Color
+{
+	const LIGHTNESS: f32 = 0.742;
+	const CHROMA: f32 = 0.104;
+
+	const MIN_HUE: f64 = 15.49;
+	const MID_HUE: f64 = 94.01;
+	const MAX_HUE: f64 = 228.07;
+
+	let norm_z = roll.mean_z_score_normalized();
+	let hue = match norm_z.partial_cmp(&0.0)
+	{
+		Some(Ordering::Less) => lerp(MIN_HUE, MID_HUE, 1.0 + norm_z),
+		Some(Ordering::Greater) => lerp(MID_HUE, MAX_HUE, norm_z),
+		_ => MID_HUE,
+	} as f32;
+
+	Color::new(
+		0xffffff
+			& Srgb::from_color(Oklch::new(LIGHTNESS, CHROMA, hue))
+				.into_format::<u8>()
+				.into_u32::<rgb::channels::Argb>(),
+	)
+}
+
+fn lerp(a: f64, b: f64, t: f64) -> f64
+{
+	a.mul_add(1.0 - t, b * t)
 }
