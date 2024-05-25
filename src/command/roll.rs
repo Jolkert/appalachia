@@ -89,6 +89,8 @@ fn roll_color(roll: &DiceEvaluation) -> Color
 	const CHROMA: f32 = 0.104;
 
 	const MIN_HUE: f64 = 15.49;
+	// yes this makes the gradient non-uniform. i've done it because i wanted the average roll to be
+	// yellow not green -morgan 2024-05-25
 	const MID_HUE: f64 = 94.01;
 	const MAX_HUE: f64 = 228.07;
 
