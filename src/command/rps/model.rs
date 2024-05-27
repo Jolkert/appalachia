@@ -79,7 +79,7 @@ impl Game
 			.map_ref(|player| player.selection)
 			.zipped()
 			.map(|(challenger_sel, opponent_sel)| {
-				let outcome = Game {
+				let mut outcome = Game {
 					players: self.players.clone().gen_map(
 						challenger_sel,
 						opponent_sel,
@@ -95,6 +95,7 @@ impl Game
 				if let Some(winner) = outcome.winner()
 				{
 					self[winner].increment_score();
+					outcome[winner].increment_score();
 				}
 
 				outcome
