@@ -6,6 +6,12 @@
 
 **Appalachia** is a discord bot (re)written in Rust
 
+## Add to your Discord server
+If you want to add appalachia to your server, all you need to do is
+[click here](https://discord.com/oauth2/authorize?client_id=519292417816395779&permissions=8&scope=bot+applications.commands) and select 
+the server you wish to add it to
+
+
 ## Commands
 ### Rock Paper Scissors `/rps`
 - Using `/rps challenge` you can challenge other users in a server to a rock paper 
