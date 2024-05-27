@@ -97,6 +97,7 @@ dependencies = [
  "dirs",
  "dotenv",
  "env_logger",
+ "lazy_static",
  "log",
  "palette",
  "poise",
