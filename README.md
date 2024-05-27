@@ -22,7 +22,7 @@ to view the scores of
 Using `/roll` you can enter an expression in
 [Dice Notation](https://en.wikipedia.org/wiki/Dice_notation), and Appalachia 
 will roll the dice for you using the
-[Saikoro](`https://github.com/jolkert/saikoro`) dice parser.
+[saikoro](https://crates.io/crates/saikoro) dice parser.
 
 ### Coin Flipping `/flip`
 Using `/flip` you can simulate a coin toss.
