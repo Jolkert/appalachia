@@ -132,7 +132,11 @@ async fn main()
 		.framework(framework)
 		.await;
 
-	client.unwrap().start().await.unwrap();
+	client
+		.expect("Failed to create client!")
+		.start()
+		.await
+		.expect("Failed to start connection!");
 }
 
 #[cfg(debug_assertions)]

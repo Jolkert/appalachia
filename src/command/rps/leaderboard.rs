@@ -329,8 +329,11 @@ fn create_user_score_embed(
 					.leaderboard()
 					.ordered_scores(None)
 					.iter()
-					.position(|(_, _, sc)| sc == &score)
-					.unwrap() + 1,
+					.position(|(id, _, _)| target_member.user.id == *id)
+					.unwrap_or_else(|| panic!(
+						"Could not find user {}({}) in {}({})",
+						target_member.user.name, target_member.user.id, guild.name, guild.id
+					)) + 1,
 				guild.name
 			),
 			true,
