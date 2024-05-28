@@ -31,7 +31,7 @@ impl Leaderboard
 		// unstable sorting by id then stable sorting by score should ensure ordered by score then
 		// by id -morgan 2024-05-19
 		unranked_vec.sort_unstable_by_key(|item| item.0);
-		unranked_vec.sort_by_key(|item| item.1);
+		unranked_vec.sort_by(|a, b| b.1.cmp(a.1));
 
 		// oh god this is a nightmare -morgan 2024-05-20
 		let mut ranked_vec = Vec::with_capacity(unranked_vec.len());
@@ -135,16 +135,16 @@ impl Ord for Score
 		match self.elo.cmp(&other.elo)
 		{
 			Ordering::Equal => (),
-			ord => return ord.reverse(),
+			ord => return ord,
 		}
 
 		match self.wins.cmp(&other.wins)
 		{
 			Ordering::Equal => (),
-			ord => return ord.reverse(),
+			ord => return ord,
 		}
 
-		self.losses.cmp(&other.losses)
+		self.losses.cmp(&other.losses).reverse()
 	}
 }
 
