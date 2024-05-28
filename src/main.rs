@@ -1,6 +1,6 @@
 // hex color literals are prefectly fine without spaces thank you very much -morgan 2024-01-15
 #![allow(clippy::unreadable_literal)]
-#![feature(let_chains)]
+#![feature(let_chains, iter_intersperse)]
 
 mod command;
 mod data;
@@ -83,7 +83,7 @@ async fn main()
 						"{} ({}) running [{}]",
 						ctx.author().name,
 						ctx.author().id,
-						ctx.command().name
+						ctx.invocation_string()
 					);
 				})
 			},
