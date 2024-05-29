@@ -33,12 +33,16 @@ macro_rules! write_lb_line {
 	};
 
 	($buffer:expr, $spacing:expr, $entry:expr) => {
-		write_lb_line!($buffer, $spacing, ($entry).rank(),
+		write_lb_line!(
+			$buffer,
+			$spacing,
+			($entry).rank(),
 			($entry).user(),
 			($entry).score().elo,
 			($entry).score().wins,
 			($entry).score().losses,
-			format!("{:.4}", ($entry).score().win_rate()).trim_start_matches('0'))
+			format!("{:.4}", ($entry).score().win_rate()).trim_start_matches('0')
+		)
 	};
 }
 
