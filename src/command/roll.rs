@@ -13,17 +13,19 @@ use crate::{Context, Error};
 #[poise::command(slash_command, prefix_command)]
 pub async fn roll(
 	ctx: Context<'_>,
-	#[flag]
-	#[description = "When true, only you will see the results"]
-	hidden: bool,
+	#[description = "Whether or not others should be able to see your roll (defaults to Public)"]
+	visibility: Option<Visibility>,
 	#[description = "The dice expression to be evaluated"]
 	#[rest]
 	dice: String,
 ) -> Result<(), Error>
 {
+	let visibility = visibility.unwrap_or_default();
+
 	let roll_result = saikoro::evaluate(&dice);
 	let mut embed = embed_from_roll(&ctx, &dice, &roll_result);
-	if hidden && let poise::Context::Prefix(_) = ctx
+	if visibility.is_private()
+		&& let poise::Context::Prefix(_) = ctx
 	{
 		embed = embed.footer(CreateEmbedFooter::new(
 			"Note: hidden rolls dont't work with non-slash commands!",
@@ -35,7 +37,7 @@ pub async fn roll(
 			.embed(embed)
 			.reply(true)
 			.allowed_mentions(CreateAllowedMentions::new())
-			.ephemeral(hidden || roll_result.is_err()),
+			.ephemeral(visibility.is_private() || roll_result.is_err()),
 	)
 	.await?;
 	Ok(())
@@ -113,4 +115,19 @@ fn roll_color(roll: &DiceEvaluation) -> Color
 fn lerp(a: f64, b: f64, t: f64) -> f64
 {
 	a.mul_add(1.0 - t, b * t)
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, poise::ChoiceParameter, Default)]
+pub enum Visibility
+{
+	#[default]
+	Public,
+	Private,
+}
+impl Visibility
+{
+	pub fn is_private(self) -> bool
+	{
+		self == Self::Private
+	}
 }
