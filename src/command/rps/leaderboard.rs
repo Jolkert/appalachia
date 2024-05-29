@@ -8,7 +8,7 @@ use poise::{
 };
 
 use crate::{
-	data::{GuildData, Score},
+	data::{GuildData, LeaderboardEntry, Score},
 	Context, Error, Reply,
 };
 
@@ -29,6 +29,24 @@ macro_rules! write_lb_line {
 			win_wid = $spacing.wins,
 			loss_wid = $spacing.losses,
 			rate_wid = $spacing.winrate,
+		)
+	};
+	($buffer:expr, $spacing:expr, $entry:expr) => {
+		writeln!(
+			$buffer,
+			"{:<rank_wid$} │ {:<user_wid$} │ {:>elo_wid$} │ {:>win_wid$} │ {:>loss_wid$} │ {:>rate_wid$}",
+			($entry).rank(),
+			($entry).user(),
+			($entry).score().elo,
+			($entry).score().wins,
+			($entry).score().losses,
+			format!("{:.4}", ($entry).score().win_rate()).trim_start_matches('0'),
+			rank_wid = ($spacing).rank,
+			user_wid = ($spacing).name,
+			elo_wid = ($spacing).elo,
+			win_wid = ($spacing).wins,
+			loss_wid = ($spacing).losses,
+			rate_wid = ($spacing).winrate,
 		)
 	};
 }
@@ -56,15 +74,15 @@ pub async fn leaderboard(
 	{
 		user_score(ctx, &guild, target_member).await?;
 	}
-	else if let Some(id_scores) = ctx
+	else if let Some(sorted_leaderboard) = ctx
 		.data()
 		.acquire_lock()
 		.await
 		.guild_data(guild.id)
 		.map(|dat| dat.leaderboard().ordered_scores(Some(15)))
-		&& !id_scores.is_empty()
+		&& !sorted_leaderboard.is_empty()
 	{
-		full_leaderboard(ctx, &guild, id_scores).await?;
+		full_leaderboard(ctx, &guild, sorted_leaderboard).await?;
 	}
 	else
 	{
@@ -76,18 +94,31 @@ pub async fn leaderboard(
 }
 
 // TODO: i still dont like this code very much but thats for a later time i think -morgan 2024-05-27
+// it's a litte better now i think. im still not a big fan of the `StringLengths` struct. either in
+// name or in purpose. but i think it'll do for now -morgan 2024-05-28
 async fn full_leaderboard(
 	ctx: Context<'_>,
 	guild: &PartialGuild,
-	id_scores: Vec<(UserId, u32, &Score)>,
+	sorted_leaderboard: Vec<LeaderboardEntry<'_>>,
 ) -> Result<(), Error>
 {
-	// no scoped threads :( i dont wanna install crossbeam just for this -morgan 2024-05-20
-	let mut scores = Vec::with_capacity(id_scores.len());
-	for (id, rank, score) in id_scores
-	{
-		scores.push((guild.member(ctx.http(), id).await?, rank, score));
-	}
+	// so for some reason vscode inlay hints are really confused as to what the type of `entry` is
+	// despite rustc being perfectly able to deduce it? kinda weird -morgan 2024-05-28
+	let scores = futures::future::try_join_all(sorted_leaderboard.into_iter().map(
+		|entry: LeaderboardEntry<UserId>| async {
+			entry
+				.map_user(|id| async move {
+					guild
+						.member(ctx.http(), id)
+						.await
+						.map(|member| unidecode::unidecode(member.display_name()))
+				})
+				.await_user()
+				.await
+				.transpose()
+		},
+	))
+	.await?;
 
 	let string_lengths = get_max_lengths(&scores).cap_name_at(32);
 
@@ -107,24 +138,15 @@ async fn full_leaderboard(
 	leaderboard_string.push_str(&string_lengths.draw_line('═', '╪'));
 
 	let mut top_3_line_drawn = false;
-	for (member, rank, score) in scores
+	for entry in scores
 	{
-		if !top_3_line_drawn && rank > 3
+		if !top_3_line_drawn && entry.rank() > 3
 		{
 			leaderboard_string.push_str(&string_lengths.draw_line('┄', '┼'));
 			top_3_line_drawn = true;
 		}
 
-		let _ = write_lb_line!(
-			leaderboard_string,
-			string_lengths,
-			rank,
-			unidecode::unidecode(member.display_name()),
-			score.elo,
-			score.wins,
-			score.losses,
-			format!("{:.4}", score.win_rate()).trim_start_matches('0')
-		);
+		let _ = write_lb_line!(leaderboard_string, string_lengths, entry);
 	}
 
 	leaderboard_string.push_str("```");
@@ -150,17 +172,17 @@ async fn full_leaderboard(
 	Ok(())
 }
 
-fn get_max_lengths(scores: &[(Member, u32, &Score)]) -> StringLengths
+fn get_max_lengths(leaderboard_entries: &[LeaderboardEntry<'_, String>]) -> StringLengths
 {
 	let mut lengths = StringLengths::default();
-	for (member, rank, score) in scores
+	for entry in leaderboard_entries
 	{
-		lengths.set_name(member.display_name());
-		lengths.set_rank(*rank);
-		lengths.set_elo(score.elo);
-		lengths.set_losses(score.losses);
-		lengths.set_wins(score.wins);
-		lengths.set_winrate(score.win_rate());
+		lengths.set_name(entry.user());
+		lengths.set_rank(entry.rank());
+		lengths.set_elo(entry.score().elo);
+		lengths.set_losses(entry.score().losses);
+		lengths.set_wins(entry.score().wins);
+		lengths.set_winrate(entry.score().win_rate());
 	}
 
 	lengths
@@ -329,7 +351,7 @@ fn create_user_score_embed(
 					.leaderboard()
 					.ordered_scores(None)
 					.iter()
-					.position(|(id, _, _)| target_member.user.id == *id)
+					.position(|entry| target_member.user.id == *entry.user())
 					.unwrap_or_else(|| panic!(
 						"Could not find user {}({}) in {}({})",
 						target_member.user.name, target_member.user.id, guild.name, guild.id

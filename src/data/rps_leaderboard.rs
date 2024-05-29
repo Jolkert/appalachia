@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, collections::HashMap};
+use std::{cmp::Ordering, collections::HashMap, future::Future};
 
 use poise::serenity_prelude::UserId;
 
@@ -19,7 +19,7 @@ impl Leaderboard
 		self.map.entry(player).or_default()
 	}
 
-	pub fn ordered_scores(&self, limit: Option<usize>) -> Vec<(UserId, u32, &Score)>
+	pub fn ordered_scores(&self, limit: Option<usize>) -> Vec<LeaderboardEntry<'_>>
 	{
 		let mut unranked_vec = self
 			.map
@@ -39,7 +39,7 @@ impl Leaderboard
 		let mut rank = 1;
 		while let Some((id, score)) = unranked_vec_iter.next()
 		{
-			ranked_vec.push((id, rank, score));
+			ranked_vec.push(LeaderboardEntry::new(id, rank, score));
 			if let Some((_, next_score)) = unranked_vec_iter.peek()
 			{
 				if &score != next_score
@@ -50,6 +50,72 @@ impl Leaderboard
 		}
 
 		ranked_vec
+	}
+}
+
+pub struct LeaderboardEntry<'a, U = UserId>
+{
+	user: U,
+	rank: u32,
+	score: &'a Score,
+}
+impl<'a, U> LeaderboardEntry<'a, U>
+{
+	pub fn new(id: U, rank: u32, score: &'a Score) -> Self
+	{
+		Self {
+			user: id,
+			rank,
+			score,
+		}
+	}
+
+	pub fn user(&self) -> &U
+	{
+		&self.user
+	}
+	pub fn rank(&self) -> u32
+	{
+		self.rank
+	}
+	pub fn score(&self) -> &Score
+	{
+		self.score
+	}
+
+	pub fn map_user<T>(self, transform: impl Fn(U) -> T) -> LeaderboardEntry<'a, T>
+	{
+		LeaderboardEntry {
+			user: transform(self.user),
+			rank: self.rank,
+			score: self.score,
+		}
+	}
+}
+impl<'a, U, E> LeaderboardEntry<'a, Result<U, E>>
+{
+	pub fn transpose(self) -> Result<LeaderboardEntry<'a, U>, E>
+	{
+		match self.user
+		{
+			Ok(inner) => Ok(LeaderboardEntry {
+				user: inner,
+				rank: self.rank,
+				score: self.score,
+			}),
+			Err(error) => Err(error),
+		}
+	}
+}
+impl<'a, U: Future + Send + Sync> LeaderboardEntry<'a, U>
+{
+	pub async fn await_user(self) -> LeaderboardEntry<'a, U::Output>
+	{
+		LeaderboardEntry {
+			user: self.user.await,
+			rank: self.rank,
+			score: self.score,
+		}
 	}
 }
 
