@@ -14,20 +14,18 @@ use poise::{
 };
 
 use crate::{
+	command::parent_command,
 	data::{Leaderboard, Outcome, Score},
 	Context, Error, Reply, Respond,
 };
 
-#[allow(clippy::unused_async)]
-#[poise::command(
-	prefix_command,
-	slash_command,
-	guild_only,
-	subcommands("challenge", "leaderboard::leaderboard")
-)]
-pub async fn rps(_: Context<'_>) -> Result<(), Error>
-{
-	Ok(())
+parent_command! {
+	let rps = poise::command(
+		prefix_command,
+		slash_command,
+		guild_only,
+		subcommands("challenge", "leaderboard::leaderboard")
+	)
 }
 
 /// Challenge another user to a game of Rock, Paper, Scissors

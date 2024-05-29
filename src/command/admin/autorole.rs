@@ -3,21 +3,17 @@ use poise::{
 	CreateReply,
 };
 
-use crate::{data::GuildData, Context, Error};
+use crate::{command::parent_command, data::GuildData, Context, Error};
 
-#[allow(clippy::unused_async)]
-/// Modify the automatically assigned role in the server
-#[poise::command(
-	prefix_command,
-	slash_command,
-	guild_only,
-	required_permissions = "MANAGE_GUILD",
-	required_bot_permissions = "MANAGE_ROLES",
-	subcommands("set", "clear", "check")
-)]
-pub async fn autorole(_: Context<'_>) -> Result<(), Error>
-{
-	Ok(())
+parent_command! {
+	let autorole = poise::command(
+		prefix_command,
+		slash_command,
+		guild_only,
+		required_permissions = "MANAGE_GUILD",
+		required_bot_permissions = "MANAGE_ROLES",
+		subcommands("set", "clear", "check")
+	)
 }
 
 /// Change which role is automatically assigned

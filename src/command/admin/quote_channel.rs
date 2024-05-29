@@ -3,21 +3,17 @@ use poise::{
 	CreateReply,
 };
 
-use crate::{data::GuildData, Context, Error};
+use crate::{command::parent_command, data::GuildData, Context, Error};
 
-#[allow(clippy::unused_async)]
-/// Modify the channel that quotes are pulled from
-#[poise::command(
-	prefix_command,
-	slash_command,
-	guild_only,
-	required_permissions = "MANAGE_GUILD",
-	required_bot_permissions = "MANAGE_CHANNELS",
-	subcommands("set", "clear", "check")
-)]
-pub async fn quote_channel(_: Context<'_>) -> Result<(), Error>
-{
-	Ok(())
+parent_command! {
+	let quote_channel = poise::command(
+		prefix_command,
+		slash_command,
+		guild_only,
+		required_permissions = "MANAGE_GUILD",
+		required_bot_permissions = "MANAGE_CHANNELS",
+		subcommands("set", "clear", "check")
+	)
 }
 
 /// Change which channel quotes are pulled from

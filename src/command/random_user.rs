@@ -4,14 +4,10 @@ use poise::{
 };
 use rand::prelude::SliceRandom;
 
-use crate::{Context, Error};
+use crate::{command::parent_command, Context, Error};
 
-// unfortunately, this seems to be the only way to make subcommands. sorry clippy -morgan 2024-01-30
-#[allow(clippy::unused_async)]
-#[poise::command(prefix_command, slash_command, guild_only, subcommands("user"))]
-pub async fn random(_: Context<'_>) -> Result<(), Error>
-{
-	Ok(())
+parent_command! {
+	let random = poise::command(prefix_command, slash_command, guild_only, subcommands("user"))
 }
 
 /// Generate a random user from the current server
