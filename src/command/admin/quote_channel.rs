@@ -3,7 +3,11 @@ use poise::{
 	CreateReply,
 };
 
-use crate::{command::parent_command, data::GuildData, Context, Error};
+use crate::{
+	command::{parent_command, ExpectGuildOnly},
+	data::GuildData,
+	Context, Error,
+};
 
 parent_command! {
 	let quote_channel = poise::command(
@@ -32,7 +36,7 @@ pub async fn set(
 	ctx.data()
 		.acquire_lock()
 		.await
-		.guild_data_mut(ctx.guild_id().unwrap())
+		.guild_data_mut(ctx.guild_id().expect_guild_only())
 		.set_quotes_channel(Some(channel.id));
 
 	ctx.send(
@@ -58,14 +62,14 @@ pub async fn clear(ctx: Context<'_>) -> Result<(), Error>
 	ctx.data()
 		.acquire_lock()
 		.await
-		.guild_data_mut(ctx.guild_id().unwrap())
+		.guild_data_mut(ctx.guild_id().expect_guild_only())
 		.set_quotes_channel(None);
 
 	ctx.send(
 		CreateReply::default()
 			.content(format!(
 				"Removed quotes channel from {}",
-				ctx.guild().unwrap().name
+				ctx.guild().expect_guild_only().name
 			))
 			.ephemeral(true),
 	)
@@ -84,7 +88,7 @@ pub async fn clear(ctx: Context<'_>) -> Result<(), Error>
 )]
 pub async fn check(ctx: Context<'_>) -> Result<(), Error>
 {
-	let guild = ctx.partial_guild().await.unwrap();
+	let guild = ctx.partial_guild().await.expect_guild_only();
 
 	if let Some(channel_id) = ctx
 		.data()

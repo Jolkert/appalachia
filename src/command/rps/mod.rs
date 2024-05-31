@@ -20,6 +20,8 @@ use crate::{
 	Context, Error, Reply, Respond,
 };
 
+use super::ExpectGuildOnly;
+
 parent_command! {
 	let rps = poise::command(
 		prefix_command,
@@ -66,8 +68,7 @@ async fn start_challenge(ctx: Context<'_>, opponent: Member, first_to: u32) -> R
 
 	if await_challenge_accept(ctx, &challenge_message, &opponent).await?
 	{
-		// unwrap ok because command is guild-only -morgan 2024-05-27
-		let guild_id = ctx.guild_id().unwrap();
+		let guild_id = ctx.guild_id().expect_guild_only();
 		// we fetch member through http instead of just passing the reference from the commands
 		// so we can use the accent color later. -morgan 2024-01-18
 		let members = ChallengerOpponentPair::new(
@@ -81,7 +82,7 @@ async fn start_challenge(ctx: Context<'_>, opponent: Member, first_to: u32) -> R
 			first_to,
 		);
 
-		let channel = ctx.guild_channel().await.unwrap();
+		let channel = ctx.guild_channel().await.expect_guild_only();
 		// if none, selections timed out -morgan 2024-05-27
 		if let Some(match_outcome) = start_game(ctx, &mut game, &members, &channel, false).await?
 		{
@@ -89,7 +90,7 @@ async fn start_challenge(ctx: Context<'_>, opponent: Member, first_to: u32) -> R
 				ctx.data()
 					.acquire_lock()
 					.await
-					.guild_data_mut(ctx.guild_id().unwrap())
+					.guild_data_mut(ctx.guild_id().expect_guild_only())
 					.leaderboard_mut(),
 				&match_outcome,
 			);
@@ -427,7 +428,7 @@ async fn await_selections(
 
 async fn start_bot_match(ctx: Context<'_>, first_to: u32) -> Result<(), Error>
 {
-	let guild_id = ctx.guild_id().unwrap();
+	let guild_id = ctx.guild_id().expect_guild_only();
 
 	let mut game = Game::start(ctx.author().id, ctx.framework().bot_id, first_to);
 	let members = ChallengerOpponentPair::new(
@@ -438,7 +439,7 @@ async fn start_bot_match(ctx: Context<'_>, first_to: u32) -> Result<(), Error>
 			.get_member(guild_id, game.opponent().id())
 			.await?,
 	);
-	let channel = ctx.guild_channel().await.unwrap();
+	let channel = ctx.guild_channel().await.expect_guild_only();
 
 	ctx.send(
 		CreateReply::default()

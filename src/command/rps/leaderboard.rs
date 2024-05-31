@@ -8,6 +8,7 @@ use poise::{
 };
 
 use crate::{
+	command::ExpectGuildOnly,
 	data::{GuildData, LeaderboardEntry, Score},
 	Context, Error, Reply,
 };
@@ -62,7 +63,7 @@ pub async fn leaderboard(
 	#[description = "Specify a user to see their specific score"] user: Option<Member>,
 ) -> Result<(), Error>
 {
-	let guild = ctx.partial_guild().await.unwrap();
+	let guild = ctx.partial_guild().await.expect_guild_only();
 
 	if let Some(target_member) = user
 	{

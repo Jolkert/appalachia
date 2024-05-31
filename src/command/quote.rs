@@ -7,7 +7,7 @@ use poise::{
 };
 use rand::prelude::SliceRandom;
 
-use crate::{Context, Error, Reply};
+use crate::{command::ExpectGuildOnly, Context, Error, Reply};
 
 /// Pull a random quote from the server's set quotes channel
 #[poise::command(slash_command, prefix_command, guild_only)]
@@ -16,13 +16,13 @@ pub async fn quote(
 	#[description = "The user to find a quote from"] user: Option<Member>,
 ) -> Result<(), Error>
 {
-	let guild = ctx.partial_guild().await.unwrap();
+	let guild = ctx.partial_guild().await.expect_guild_only();
 
 	if let Some(quote_channel_id) = ctx
 		.data()
 		.acquire_lock()
 		.await
-		.guild_data(ctx.guild_id().unwrap())
+		.guild_data(ctx.guild_id().expect_guild_only())
 		.and_then(|dat| dat.quotes_channel())
 		&& let Some(quote_channel) = guild.channels(ctx).await?.get(quote_channel_id)
 	{

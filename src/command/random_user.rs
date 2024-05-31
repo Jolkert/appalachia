@@ -4,7 +4,10 @@ use poise::{
 };
 use rand::prelude::SliceRandom;
 
-use crate::{command::parent_command, Context, Error};
+use crate::{
+	command::{parent_command, ExpectGuildOnly},
+	Context, Error,
+};
 
 parent_command! {
 	let random = poise::command(prefix_command, slash_command, guild_only, subcommands("user"))
@@ -37,7 +40,7 @@ pub async fn user(
 		(!include_self && member.user.id == ctx.author().id) || (!include_bots && member.user.bot)
 	};
 
-	let guild_id = ctx.guild_id().unwrap();
+	let guild_id = ctx.guild_id().expect_guild_only();
 	let members = ctx
 		.http()
 		.get_guild_members(guild_id, None, None)
