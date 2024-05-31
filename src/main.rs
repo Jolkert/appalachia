@@ -5,15 +5,12 @@
 mod command;
 mod data;
 
-use std::{path::PathBuf, sync::Arc};
-
-use data::{Data, DataManager, GuildData};
+use data::{config::Config, Data, DataManager, GuildData};
 use poise::{
 	serenity_prelude::{
-		self as serenity, futures::lock::Mutex, ActivityData, CacheHttp, ClientBuilder, Color,
-		ComponentInteraction, CreateAllowedMentions, CreateEmbed, CreateEmbedFooter,
-		CreateInteractionResponse, CreateInteractionResponseMessage, FullEvent, GatewayIntents,
-		GuildId, Member, Ready,
+		self as serenity, ActivityData, CacheHttp, ClientBuilder, Color, ComponentInteraction,
+		CreateAllowedMentions, CreateEmbed, CreateEmbedFooter, CreateInteractionResponse,
+		CreateInteractionResponseMessage, FullEvent, GatewayIntents, GuildId, Member, Ready,
 	},
 	Command, CreateReply, FrameworkContext,
 };
@@ -36,7 +33,7 @@ async fn main()
 		log::error!("Error reading .env file {e}");
 	}
 
-	let config = load_config().unwrap_or_else(|err| {
+	let config = Config::load("config.toml").unwrap_or_else(|err| {
 		log::error!("Could not read config file! {err}");
 		panic!("Could not read config file! {err}")
 	});
@@ -105,12 +102,10 @@ async fn main()
 			Box::pin(async move {
 				register_commands(ctx, &framework.options().commands).await?;
 
-				Ok(Data {
-					status: config.status,
-					data_manager: Arc::new(Mutex::new(DataManager::load_or_create_from_dir(
-						config.data_directory,
-					))),
-				})
+				Ok(Data::new(
+					config.status,
+					DataManager::load_or_create_from_dir(config.data_directory),
+				))
 			})
 		})
 		.build();
@@ -149,53 +144,13 @@ async fn register_commands(
 	Ok(())
 }
 
-fn load_config() -> Result<Config, Error>
-{
-	let config_file_path = config_root().join("config.toml");
-
-	match std::fs::read_to_string(&config_file_path)
-	{
-		Ok(file_content) => toml::from_str(&file_content).map_err(Into::into),
-		Err(err) if err.kind() == std::io::ErrorKind::NotFound =>
-		{
-			let config = Config::default();
-			std::fs::write(config_file_path, toml::to_string_pretty(&config)?)?;
-			Ok(config)
-		}
-		Err(err) => Err(Box::new(err)),
-	}
-}
-
-#[cfg(debug_assertions)]
-fn config_root() -> PathBuf
-{
-	PathBuf::from("./")
-}
-
-#[cfg(not(debug_assertions))]
-fn config_root() -> PathBuf
-{
-	let dir = dirs::config_dir().map_or_else(
-		|| PathBuf::from("./"),
-		|config_dir| config_dir.join("appalachia/"),
-	);
-	std::fs::create_dir_all(&dir).expect("Failed to create config directory!");
-	dir
-}
-
 fn on_ready(ctx: &serenity::Context, ready: &Ready, framework: FrameworkContext<'_, Data, Error>)
 {
 	log::info!("Appalachia v{}", env!("CARGO_PKG_VERSION"));
 	log::info!("Discord API v{}", ready.version);
 	log::info!("Loaded {} commands", framework.options.commands.len());
 
-	ctx.set_activity(
-		framework
-			.user_data
-			.status
-			.as_ref()
-			.map(ActivityData::custom),
-	);
+	ctx.set_activity(framework.user_data.status().map(ActivityData::custom));
 	log::info!("{} online!", ready.user.name);
 }
 
@@ -294,43 +249,4 @@ fn error_embed(description: impl Into<String>) -> CreateEmbed
 			CreateEmbedFooter::new("If you think this is a bug, contact my mama, Jolkert!")
 				.icon_url("https://jolkert.dev/img/icon_small.png"),
 		)
-}
-
-#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
-struct Config
-{
-	#[serde(default)]
-	token: String,
-
-	#[serde(default = "Config::default_prefix")]
-	prefix: String,
-
-	#[serde(default = "Config::default_data_dir")]
-	data_directory: PathBuf,
-
-	#[serde(default)]
-	status: Option<String>,
-}
-impl Default for Config
-{
-	fn default() -> Self
-	{
-		Self {
-			token: String::default(),
-			prefix: Self::default_prefix(),
-			data_directory: Self::default_data_dir(),
-			status: None,
-		}
-	}
-}
-impl Config
-{
-	fn default_prefix() -> String
-	{
-		String::from("~")
-	}
-	fn default_data_dir() -> PathBuf
-	{
-		config_root().join("data/")
-	}
 }

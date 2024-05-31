@@ -1,3 +1,4 @@
+pub mod config;
 mod guild_data;
 mod rps_leaderboard;
 
@@ -11,11 +12,24 @@ use poise::serenity_prelude::GuildId;
 
 pub struct Data
 {
-	pub status: Option<String>,
-	pub data_manager: Arc<Mutex<DataManager>>,
+	status: Option<String>,
+	data_manager: Arc<Mutex<DataManager>>,
 }
 impl Data
 {
+	pub fn new(status: Option<String>, data_manager: DataManager) -> Self
+	{
+		Self {
+			status,
+			data_manager: Arc::new(Mutex::new(data_manager)),
+		}
+	}
+
+	pub fn status(&self) -> Option<&str>
+	{
+		self.status.as_deref()
+	}
+
 	pub async fn acquire_lock(&self) -> MutexGuard<DataManager>
 	{
 		self.data_manager.lock().await
