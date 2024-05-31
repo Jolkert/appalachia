@@ -461,6 +461,19 @@ impl Selection
 			.emoji(self.emoji())
 	}
 }
+impl rand::distributions::Distribution<Selection> for rand::distributions::Standard
+{
+	fn sample<R: rand::prelude::Rng + ?Sized>(&self, rng: &mut R) -> Selection
+	{
+		match rng.gen_range(0..3)
+		{
+			0 => Selection::Rock,
+			1 => Selection::Paper,
+			2 => Selection::Scissors,
+			_ => panic!("Rng generated an out-of-bounds value trying to create a Selection!"),
+		}
+	}
+}
 impl Display for Selection
 {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result

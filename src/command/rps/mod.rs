@@ -12,6 +12,7 @@ use poise::{
 	},
 	CreateReply,
 };
+use rand::Rng;
 
 use crate::{
 	command::parent_command,
@@ -41,6 +42,10 @@ pub async fn challenge(
 		ctx.reply_error(String::from("You can't challenge yourself!"))
 			.await?;
 		Ok(())
+	}
+	else if opponent.user.id == ctx.framework().bot_id
+	{
+		start_bot_match(ctx, first_to.unwrap_or(1)).await
 	}
 	else if opponent.user.bot
 	{
@@ -78,7 +83,7 @@ async fn start_challenge(ctx: Context<'_>, opponent: Member, first_to: u32) -> R
 
 		let channel = ctx.guild_channel().await.unwrap();
 		// if none, selections timed out -morgan 2024-05-27
-		if let Some(match_outcome) = start_game(ctx, &mut game, &members, &channel).await?
+		if let Some(match_outcome) = start_game(ctx, &mut game, &members, &channel, false).await?
 		{
 			let rating_changes = update_leaderboard(
 				ctx.data()
@@ -96,7 +101,7 @@ async fn start_challenge(ctx: Context<'_>, opponent: Member, first_to: u32) -> R
 						ctx,
 						&match_outcome,
 						&members,
-						rating_changes,
+						Some(rating_changes),
 					)),
 				)
 				.await?;
@@ -110,12 +115,12 @@ fn create_match_embed(
 	ctx: Context<'_>,
 	match_outcome: &MatchOutcome,
 	members: &ChallengerOpponentPair<Member>,
-	rating_changes: ChallengerOpponentPair<(i32, i32)>,
+	rating_changes: Option<ChallengerOpponentPair<(i32, i32)>>,
 ) -> CreateEmbed
 {
 	let winner = &members[match_outcome.winning_side()];
 
-	CreateEmbed::new()
+	let mut embed = CreateEmbed::new()
 		.title("Game, Set, and Match")
 		.description(format!("# {} wins!", winner.mention()))
 		.field(
@@ -127,7 +132,17 @@ fn create_match_embed(
 			),
 			true,
 		)
-		.field(
+		.color(
+			winner
+				.user
+				.accent_colour
+				.unwrap_or_else(|| winner.colour(ctx).unwrap_or(crate::DEFAULT_COLOR)),
+		)
+		.thumbnail(winner.face());
+
+	if let Some(rating_changes) = rating_changes
+	{
+		embed = embed.field(
 			"Ratings",
 			{
 				let mut ratings_string = String::new();
@@ -141,14 +156,10 @@ fn create_match_embed(
 				ratings_string
 			},
 			true,
-		)
-		.color(
-			winner
-				.user
-				.accent_colour
-				.unwrap_or_else(|| winner.colour(ctx).unwrap_or(crate::DEFAULT_COLOR)),
-		)
-		.thumbnail(winner.face())
+		);
+	}
+
+	embed
 }
 
 fn update_leaderboard(
@@ -308,10 +319,15 @@ async fn start_game(
 	game: &mut Game<Option<Selection>>,
 	members: &ChallengerOpponentPair<Member>,
 	channel: &GuildChannel,
+	is_bot_match: bool,
 ) -> Result<Option<MatchOutcome>, Error>
 {
 	let match_outcome = loop
 	{
+		if is_bot_match
+		{
+			game[Side::Opponent].select(rand::thread_rng().gen());
+		}
 		let selection_message = channel
 			.send_message(ctx, SELECTION_MESSAGE_TEMPLATE.clone())
 			.await?;
@@ -407,6 +423,51 @@ async fn await_selections(
 	};
 
 	Ok(outcome)
+}
+
+async fn start_bot_match(ctx: Context<'_>, first_to: u32) -> Result<(), Error>
+{
+	let guild_id = ctx.guild_id().unwrap();
+
+	let mut game = Game::start(ctx.author().id, ctx.framework().bot_id, first_to);
+	let members = ChallengerOpponentPair::new(
+		ctx.http()
+			.get_member(guild_id, game.challenger().id())
+			.await?,
+		ctx.http()
+			.get_member(guild_id, game.opponent().id())
+			.await?,
+	);
+	let channel = ctx.guild_channel().await.unwrap();
+
+	ctx.send(
+		CreateReply::default()
+			.embed(
+				CreateEmbed::new()
+					.title("Challenge accepted!")
+					.description(format!(
+						"I accept {}'s challenge!",
+						members.challenger.mention()
+					))
+					.color(crate::DEFAULT_COLOR),
+			)
+			.allowed_mentions(CreateAllowedMentions::new())
+			.reply(true),
+	)
+	.await?;
+
+	// a little wet but thats ok i for now i think -morgan 2024-05-30
+	if let Some(match_outcome) = start_game(ctx, &mut game, &members, &channel, true).await?
+	{
+		channel
+			.send_message(
+				ctx,
+				CreateMessage::new().embed(create_match_embed(ctx, &match_outcome, &members, None)),
+			)
+			.await?;
+	}
+
+	Ok(())
 }
 
 lazy_static! {
