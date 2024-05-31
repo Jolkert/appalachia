@@ -4,15 +4,17 @@
 
 mod command;
 mod data;
+mod events;
+mod respond;
 
-use data::{config::Config, Data, DataManager, GuildData};
+pub use respond::*;
+
+use data::{config::Config, Data, DataManager};
 use poise::{
 	serenity_prelude::{
-		self as serenity, ActivityData, CacheHttp, ClientBuilder, Color, ComponentInteraction,
-		CreateAllowedMentions, CreateEmbed, CreateEmbedFooter, CreateInteractionResponse,
-		CreateInteractionResponseMessage, FullEvent, GatewayIntents, GuildId, Member, Ready,
+		self as serenity, ClientBuilder, Color, CreateAllowedMentions, GatewayIntents, GuildId,
 	},
-	Command, CreateReply, FrameworkContext,
+	Command,
 };
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -77,23 +79,7 @@ async fn main()
 				})
 			},
 			event_handler: |ctx, event, framework, data| {
-				Box::pin(async move {
-					match event
-					{
-						FullEvent::Ready { data_about_bot } =>
-						{
-							on_ready(ctx, data_about_bot, framework);
-						}
-						FullEvent::CacheReady { guilds } => on_cache_ready(guilds),
-						FullEvent::GuildMemberAddition { new_member } =>
-						{
-							add_autorole(ctx, new_member, data).await?;
-						}
-						_ => (),
-					}
-
-					Ok(())
-				})
+				Box::pin(events::handle(ctx, event, framework, data))
 			},
 			allowed_mentions: Some(CreateAllowedMentions::new().all_users(true)),
 			..Default::default()
@@ -142,111 +128,4 @@ async fn register_commands(
 	poise::builtins::register_globally(ctx, commands).await?;
 	log::info!("Registered commands globally");
 	Ok(())
-}
-
-fn on_ready(ctx: &serenity::Context, ready: &Ready, framework: FrameworkContext<'_, Data, Error>)
-{
-	log::info!("Appalachia v{}", env!("CARGO_PKG_VERSION"));
-	log::info!("Discord API v{}", ready.version);
-	log::info!("Loaded {} commands", framework.options.commands.len());
-
-	ctx.set_activity(framework.user_data.status().map(ActivityData::custom));
-	log::info!("{} online!", ready.user.name);
-}
-
-fn on_cache_ready(guilds: &[GuildId])
-{
-	log::info!("Active in {} guilds", guilds.len());
-}
-
-async fn add_autorole(ctx: &serenity::Context, member: &Member, data: &Data) -> Result<(), Error>
-{
-	let role_id = {
-		data.acquire_lock()
-			.await
-			.guild_data(member.guild_id)
-			.and_then(GuildData::autorole)
-			.copied()
-	};
-
-	if let Some(role_id) = role_id
-	{
-		member.add_role(ctx.http(), role_id).await?;
-	}
-
-	Ok(())
-}
-
-trait Respond
-{
-	async fn respond(self, ctx: Context<'_>, embed: CreateEmbed) -> Result<(), Error>;
-	async fn respond_ephemeral(self, ctx: Context<'_>, embed: CreateEmbed) -> Result<(), Error>;
-}
-impl Respond for ComponentInteraction
-{
-	async fn respond(self, ctx: Context<'_>, embed: CreateEmbed) -> Result<(), Error>
-	{
-		self.create_response(
-			ctx,
-			CreateInteractionResponse::Message(
-				CreateInteractionResponseMessage::new()
-					.embed(embed)
-					.allowed_mentions(CreateAllowedMentions::new()),
-			),
-		)
-		.await?;
-		Ok(())
-	}
-
-	async fn respond_ephemeral(self, ctx: Context<'_>, embed: CreateEmbed) -> Result<(), Error>
-	{
-		self.create_response(
-			ctx,
-			CreateInteractionResponse::Message(
-				CreateInteractionResponseMessage::new()
-					.embed(embed)
-					.allowed_mentions(CreateAllowedMentions::new())
-					.ephemeral(true),
-			),
-		)
-		.await?;
-		Ok(())
-	}
-}
-
-trait Reply
-{
-	// i know there's a reason i didn't make this impl Into<String> before because i remember being
-	// sad that i couldn't do it. but now it compiles just fine? im really not sure what the issue
-	// was before but it seems to work so im leaving it here cause its a lot better -morgan
-	// 2024-05-31
-	async fn reply_error(self, error_text: impl Into<String> + Send + Sync) -> Result<(), Error>;
-}
-impl Reply for Context<'_>
-{
-	async fn reply_error(self, error_text: impl Into<String> + Send + Sync) -> Result<(), Error>
-	{
-		self.send(
-			CreateReply::default()
-				.embed(crate::error_embed(error_text))
-				.reply(true)
-				.allowed_mentions(CreateAllowedMentions::new())
-				.ephemeral(true),
-		)
-		.await?;
-
-		Ok(())
-	}
-}
-
-fn error_embed(description: impl Into<String>) -> CreateEmbed
-{
-	CreateEmbed::new()
-		.title("Error")
-		.description(description)
-		.color(ERROR_COLOR)
-		.footer(
-			CreateEmbedFooter::new("If you think this is a bug, contact my mama, Jolkert!")
-				.icon_url("https://jolkert.dev/img/icon_small.png"),
-		)
 }
