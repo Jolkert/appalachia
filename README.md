@@ -19,6 +19,7 @@ scissors match. If the opponent accpets, you play by interacting with buttons
 on a message the bot will send in the channel the challenge was issued from. 
 If you specify an integer in the `first_to` field, the game will continue 
 until either player reaches the specified amount of wins.
+- You can also challenge the bot to a match!
 - Using `/rps leaderboard` you can view the leaderboard for current server. The bot
 keeps track of the wins and losses of each member of the server who has played rock
 paper scissors at least once in the server. You can also specify a specific member

@@ -1,3 +1,8 @@
+# 0.2.5
+## Commands
+- `/rps` now allows the user to challenge the bot
+    - bot currently plays comepletely at random
+
 # v0.2.3
 ## Commands
 - `/roll` now color-codes rolls based on how good they were relative to the mean
