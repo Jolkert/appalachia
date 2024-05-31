@@ -7,30 +7,17 @@ mod data;
 
 use std::{path::PathBuf, sync::Arc};
 
-use data::{DataManager, GuildData};
+use data::{Data, DataManager, GuildData};
 use poise::{
 	serenity_prelude::{
-		self as serenity,
-		futures::lock::{Mutex, MutexGuard},
-		ActivityData, CacheHttp, ClientBuilder, Color, ComponentInteraction, CreateAllowedMentions,
-		CreateEmbed, CreateEmbedFooter, CreateInteractionResponse,
-		CreateInteractionResponseMessage, FullEvent, GatewayIntents, GuildId, Member, Ready,
+		self as serenity, futures::lock::Mutex, ActivityData, CacheHttp, ClientBuilder, Color,
+		ComponentInteraction, CreateAllowedMentions, CreateEmbed, CreateEmbedFooter,
+		CreateInteractionResponse, CreateInteractionResponseMessage, FullEvent, GatewayIntents,
+		GuildId, Member, Ready,
 	},
 	Command, CreateReply, FrameworkContext,
 };
 
-struct Data
-{
-	status: Option<String>,
-	data_manager: Arc<Mutex<DataManager>>,
-}
-impl Data
-{
-	pub async fn acquire_lock(&self) -> MutexGuard<DataManager>
-	{
-		self.data_manager.lock().await
-	}
-}
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
 
@@ -278,11 +265,11 @@ trait Reply
 	// sad that i couldn't do it. but now it compiles just fine? im really not sure what the issue
 	// was before but it seems to work so im leaving it here cause its a lot better -morgan
 	// 2024-05-31
-	async fn reply_error(self, error_text: impl Into<String>) -> Result<(), Error>;
+	async fn reply_error(self, error_text: impl Into<String> + Send + Sync) -> Result<(), Error>;
 }
 impl Reply for Context<'_>
 {
-	async fn reply_error(self, error_text: impl Into<String>) -> Result<(), Error>
+	async fn reply_error(self, error_text: impl Into<String> + Send + Sync) -> Result<(), Error>
 	{
 		self.send(
 			CreateReply::default()

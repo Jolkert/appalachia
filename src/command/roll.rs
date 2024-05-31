@@ -7,7 +7,7 @@ use poise::{
 };
 use saikoro::{error::ParsingError, evaluation::DiceEvaluation};
 
-use crate::{command::ExpectGuildOnly, Context, Error};
+use crate::{Context, Error};
 
 /// Roll some dice!
 #[poise::command(slash_command, prefix_command)]

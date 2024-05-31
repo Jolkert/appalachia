@@ -1,12 +1,26 @@
 mod guild_data;
 mod rps_leaderboard;
 
+use futures::lock::{Mutex, MutexGuard};
 pub use guild_data::*;
 pub use rps_leaderboard::*;
 
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use poise::serenity_prelude::GuildId;
+
+pub struct Data
+{
+	pub status: Option<String>,
+	pub data_manager: Arc<Mutex<DataManager>>,
+}
+impl Data
+{
+	pub async fn acquire_lock(&self) -> MutexGuard<DataManager>
+	{
+		self.data_manager.lock().await
+	}
+}
 
 #[derive(Debug)]
 pub struct DataManager
