@@ -253,38 +253,38 @@ impl<T> ChallengerOpponentPair<T>
 		(self.challenger, self.opponent)
 	}
 
-	pub fn generate<U>(challenger_arg: U, opponent_arg: U, generator: impl Fn(U) -> T) -> Self
+	pub fn generate<U>(challenger_arg: U, opponent_arg: U, f: impl Fn(U) -> T) -> Self
 	{
-		Self::new(generator(challenger_arg), generator(opponent_arg))
+		Self::new(f(challenger_arg), f(opponent_arg))
 	}
 
-	pub fn map<U>(self, mut transform: impl FnMut(T) -> U) -> ChallengerOpponentPair<U>
+	pub fn map<U>(self, mut f: impl FnMut(T) -> U) -> ChallengerOpponentPair<U>
 	{
-		ChallengerOpponentPair::new(transform(self.challenger), transform(self.opponent))
+		ChallengerOpponentPair::new(f(self.challenger), f(self.opponent))
 	}
 
-	pub fn map_ref<U>(&self, transform: impl Fn(&T) -> U) -> ChallengerOpponentPair<U>
+	pub fn map_ref<U>(&self, f: impl Fn(&T) -> U) -> ChallengerOpponentPair<U>
 	{
-		ChallengerOpponentPair::new(transform(&self.challenger), transform(&self.opponent))
+		ChallengerOpponentPair::new(f(&self.challenger), f(&self.opponent))
 	}
 
 	pub fn gen_map<U, V>(
 		self,
 		challenger_arg: V,
 		opponent_arg: V,
-		mut generator: impl FnMut(T, V) -> U,
+		mut f: impl FnMut(T, V) -> U,
 	) -> ChallengerOpponentPair<U>
 	{
 		ChallengerOpponentPair::new(
-			generator(self.challenger, challenger_arg),
-			generator(self.opponent, opponent_arg),
+			f(self.challenger, challenger_arg),
+			f(self.opponent, opponent_arg),
 		)
 	}
 
-	pub fn for_each(self, mut func: impl FnMut(T))
+	pub fn for_each(self, mut f: impl FnMut(T))
 	{
-		func(self.challenger);
-		func(self.opponent);
+		f(self.challenger);
+		f(self.opponent);
 	}
 
 	pub fn zip<U>(self, other: ChallengerOpponentPair<U>) -> ChallengerOpponentPair<(T, U)>

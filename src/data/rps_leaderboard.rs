@@ -83,10 +83,10 @@ impl<'a, U> LeaderboardEntry<'a, U>
 		self.score
 	}
 
-	pub fn map_user<T>(self, transform: impl Fn(U) -> T) -> LeaderboardEntry<'a, T>
+	pub fn map_user<T>(self, f: impl Fn(U) -> T) -> LeaderboardEntry<'a, T>
 	{
 		LeaderboardEntry {
-			user: transform(self.user),
+			user: f(self.user),
 			rank: self.rank,
 			score: self.score,
 		}
