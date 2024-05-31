@@ -85,7 +85,7 @@ pub async fn quote(
 	}
 	else
 	{
-		ctx.reply_error(String::from("This server has no quotes channel!"))
+		ctx.reply_error("This server has no quotes channel!")
 			.await?;
 	}
 

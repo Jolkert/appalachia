@@ -274,11 +274,15 @@ impl Respond for ComponentInteraction
 
 trait Reply
 {
-	async fn reply_error(self, error_text: String) -> Result<(), Error>;
+	// i know there's a reason i didn't make this impl Into<String> before because i remember being
+	// sad that i couldn't do it. but now it compiles just fine? im really not sure what the issue
+	// was before but it seems to work so im leaving it here cause its a lot better -morgan
+	// 2024-05-31
+	async fn reply_error(self, error_text: impl Into<String>) -> Result<(), Error>;
 }
 impl Reply for Context<'_>
 {
-	async fn reply_error(self, error_text: String) -> Result<(), Error>
+	async fn reply_error(self, error_text: impl Into<String>) -> Result<(), Error>
 	{
 		self.send(
 			CreateReply::default()

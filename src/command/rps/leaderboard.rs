@@ -81,7 +81,7 @@ pub async fn leaderboard(
 	}
 	else
 	{
-		ctx.reply_error(String::from("No leaderboard exists for this server!"))
+		ctx.reply_error("No leaderboard exists for this server!")
 			.await?;
 	}
 

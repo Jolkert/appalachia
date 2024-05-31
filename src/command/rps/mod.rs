@@ -41,8 +41,7 @@ pub async fn challenge(
 {
 	if ctx.author().id == opponent.user.id
 	{
-		ctx.reply_error(String::from("You can't challenge yourself!"))
-			.await?;
+		ctx.reply_error("You can't challenge yourself!").await?;
 		Ok(())
 	}
 	else if opponent.user.id == ctx.framework().bot_id
@@ -51,8 +50,7 @@ pub async fn challenge(
 	}
 	else if opponent.user.bot
 	{
-		ctx.reply_error(String::from("You can't challenge a bot!"))
-			.await?;
+		ctx.reply_error("You can't challenge a bot!").await?;
 		Ok(())
 	}
 	else
