@@ -10,12 +10,7 @@ mod respond;
 pub use respond::*;
 
 use data::{config::Config, Data, DataManager};
-use poise::{
-	serenity_prelude::{
-		self as serenity, ClientBuilder, Color, CreateAllowedMentions, GatewayIntents, GuildId,
-	},
-	Command,
-};
+use poise::serenity_prelude::{ClientBuilder, Color, CreateAllowedMentions, GatewayIntents};
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
@@ -48,15 +43,7 @@ async fn main()
 
 	let framework = poise::Framework::builder()
 		.options(poise::FrameworkOptions {
-			commands: vec![
-				command::roll(),
-				command::flip(),
-				command::rps(),
-				command::random(),
-				command::quote(),
-				command::admin::autorole(),
-				command::admin::quote_channel(),
-			],
+			commands: command::vec(),
 			prefix_options: poise::PrefixFrameworkOptions {
 				prefix: Some(config.prefix),
 				mention_as_prefix: true,
@@ -86,7 +73,7 @@ async fn main()
 		})
 		.setup(|ctx, _ready, framework| {
 			Box::pin(async move {
-				register_commands(ctx, &framework.options().commands).await?;
+				command::register(ctx, &framework.options().commands).await?;
 
 				Ok(Data::new(
 					config.status,
@@ -105,27 +92,4 @@ async fn main()
 		.start()
 		.await
 		.expect("Failed to start connection!");
-}
-
-#[cfg(debug_assertions)]
-async fn register_commands(
-	ctx: &serenity::Context,
-	commands: &[Command<Data, Error>],
-) -> Result<(), Error>
-{
-	poise::builtins::register_in_guild(ctx, commands, GuildId::from(1094129348455436368)).await?;
-	poise::builtins::register_in_guild(ctx, commands, GuildId::from(390334803972587530)).await?;
-	log::info!("Registered commands in guilds");
-	Ok(())
-}
-
-#[cfg(not(debug_assertions))]
-async fn register_commands(
-	ctx: &serenity::Context,
-	commands: &[Command<Data, Error>],
-) -> Result<(), Error>
-{
-	poise::builtins::register_globally(ctx, commands).await?;
-	log::info!("Registered commands globally");
-	Ok(())
 }
