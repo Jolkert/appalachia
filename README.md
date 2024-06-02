@@ -34,8 +34,8 @@ will roll the dice for you using the
 ### Coin Flipping `/flip`
 Using `/flip` you can simulate a coin toss.
 
-### Random User Selection `/random user`
-Using `/random user` you can prompt the bot to select a random user from the 
+### Random User Selection `/randuser`
+Using `/randuser` you can prompt the bot to select a random user from the 
 server you are in. You can also specify whether or not bots should be included
 (`false` by default) and whether or not the user who ran the command should be
 included (`true` by default)
@@ -56,5 +56,4 @@ To use this command:
 - The bot must have the "Manage Roles" permission
 
 ## Planned Features
-- `/random user` filter for only including users in the current voice channel
 - Custom welcome messages

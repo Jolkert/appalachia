@@ -1,22 +1,17 @@
 use poise::{
-	serenity_prelude::{CreateEmbed, Member, Mentionable},
+	serenity_prelude::{ChannelType, CreateEmbed, Member, Mentionable},
 	CreateReply,
 };
 use rand::prelude::SliceRandom;
 
-use crate::{
-	command::{parent_command, ExpectGuildOnly},
-	Context, Error,
-};
-
-parent_command! {
-	let random = poise::command(prefix_command, slash_command, guild_only, subcommands("user"))
-}
+use crate::{command::ExpectGuildOnly, Context, Error, Reply};
 
 /// Generate a random user from the current server
-#[poise::command(prefix_command, slash_command, guild_only)]
-pub async fn user(
+#[poise::command(prefix_command, slash_command, guild_only, rename = "randuser")]
+pub async fn random_user(
 	ctx: Context<'_>,
+	#[description = "Whether to pull only from your current voice channel (Whole server by default)"]
+	include: Option<ChannelPolicy>,
 	#[description = "Whether or not you should be considered for being potentially pulled (True by default)"]
 	include_self: Option<bool>,
 	#[description = "Whether or not bots should be considered for being potentially pulled (False by default)"]
@@ -24,6 +19,7 @@ pub async fn user(
 	include_bots: bool,
 ) -> Result<(), Error>
 {
+	let channel_policy = include.unwrap_or_default();
 	let include_self = include_self.unwrap_or(true);
 
 	// we create this closure here because it makes it a lot more readable than the alternatives.
@@ -41,13 +37,42 @@ pub async fn user(
 	};
 
 	let guild_id = ctx.guild_id().expect_guild_only();
-	let members = ctx
-		.http()
-		.get_guild_members(guild_id, None, None)
-		.await?
-		.into_iter()
-		.filter(|member| !should_exclude(member))
-		.collect::<Vec<_>>();
+	let members = if channel_policy == ChannelPolicy::CurrentVoiceChannel
+	{
+		if let Some((_, channel)) = ctx
+			.partial_guild()
+			.await
+			.expect_guild_only()
+			.channels(ctx)
+			.await?
+			.into_iter()
+			.find(|(_, channel)| {
+				channel.kind == ChannelType::Voice
+					&& channel.members(ctx).is_ok_and(|members| {
+						members
+							.iter()
+							.any(|member| member.user.id == ctx.author().id)
+					})
+			})
+		{
+			channel.members(ctx)?
+		}
+		else
+		{
+			ctx.reply_error("I couldn't find you in any channels!")
+				.await?;
+			return Ok(());
+		}
+	}
+	else
+	{
+		ctx.http()
+			.get_guild_members(guild_id, None, None)
+			.await?
+			.into_iter()
+			.filter(|member| !should_exclude(member))
+			.collect::<Vec<_>>()
+	};
 
 	let generated = {
 		// the rng has to go out of scope before the await call. im actually not entirely sure
@@ -79,3 +104,13 @@ pub async fn user(
 #[derive(Debug, Clone, Copy, thiserror::Error)]
 #[error("No members found in guild!")]
 pub struct NoMembersError;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, poise::ChoiceParameter)]
+enum ChannelPolicy
+{
+	#[default]
+	#[name = "Whole Server"]
+	EntireGuild,
+	#[name = "Current Channel Only"]
+	CurrentVoiceChannel,
+}

@@ -1,3 +1,8 @@
+# 0.2.6
+## Commands
+- `/random user` renamed to `/randuser`
+- `/randuser` now allows for selecting only from the user's current voice channel
+
 # 0.2.5
 ## Commands
 - `/rps` now allows the user to challenge the bot

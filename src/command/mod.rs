@@ -17,7 +17,7 @@ pub fn vec() -> Vec<Command<Data, Error>>
 		roll::roll(),
 		flip::flip(),
 		rps::rps(),
-		random_user::random(),
+		random_user::random_user(),
 		quote::quote(),
 		admin::autorole(),
 		admin::quote_channel(),
