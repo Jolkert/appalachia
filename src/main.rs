@@ -1,6 +1,6 @@
 // hex color literals are prefectly fine without spaces thank you very much -morgan 2024-01-15
 #![allow(clippy::unreadable_literal)]
-#![feature(let_chains)]
+#![feature(let_chains, string_into_chars)]
 
 mod command;
 mod data;

@@ -62,7 +62,7 @@ fn embed_from_roll(
 			.fields(roll.roll_groups.iter().map(|group| {
 				(
 					format!("{}d{}", group.len(), group.faces),
-					format!(
+					clamp_roll_embed_len(format!(
 						"[{}]",
 						group
 							.iter()
@@ -74,7 +74,7 @@ fn embed_from_roll(
 							})
 							.collect::<Vec<_>>()
 							.join(", ")
-					),
+					)),
 					true,
 				)
 			})),
@@ -82,6 +82,28 @@ fn embed_from_roll(
 			"Trying to interpret `{input_string}` failed!\n*{}*",
 			err.to_string().replace('*', r"\*")
 		)),
+	}
+}
+
+fn clamp_roll_embed_len(raw: String) -> String
+{
+	if raw.len() <= 1024
+	{
+		raw
+	}
+	else
+	{
+		let temp = raw.into_chars().take(1020).collect::<Vec<_>>();
+		let temp = temp
+			.into_iter()
+			.rev()
+			.skip_while(|char| *char != ' ')
+			.collect::<Vec<_>>();
+
+		let mut temp_str = temp.into_iter().rev().collect::<String>();
+		temp_str.push_str("...]");
+
+		temp_str
 	}
 }
 

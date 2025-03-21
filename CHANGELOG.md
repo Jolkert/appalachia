@@ -1,3 +1,7 @@
+# 0.2.7
+## Commands
+- `/roll` now truncates the embed string if it would be > 1024 characters rather than allowing the malformed embed field message to be sent
+
 # 0.2.6
 ## Commands
 - `/random user` renamed to `/randuser`
