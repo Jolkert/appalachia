@@ -461,11 +461,11 @@ impl Selection
 			.emoji(self.emoji())
 	}
 }
-impl rand::distributions::Distribution<Selection> for rand::distributions::Standard
+impl rand::distr::Distribution<Selection> for rand::distr::StandardUniform
 {
 	fn sample<R: rand::prelude::Rng + ?Sized>(&self, rng: &mut R) -> Selection
 	{
-		match rng.gen_range(0..3)
+		match rng.random_range(0..3)
 		{
 			0 => Selection::Rock,
 			1 => Selection::Paper,

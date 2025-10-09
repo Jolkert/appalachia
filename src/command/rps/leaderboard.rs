@@ -1,16 +1,17 @@
 use std::fmt::Write;
 
 use poise::{
+	CreateReply,
 	serenity_prelude::{
 		CreateAllowedMentions, CreateEmbed, Member, Mentionable, PartialGuild, UserId,
 	},
-	CreateReply,
 };
+use tap::Pipe;
 
 use crate::{
+	Context, Error, Reply,
 	command::ExpectGuildOnly,
 	data::{GuildData, LeaderboardEntry, Score},
-	Context, Error, Reply,
 };
 
 macro_rules! write_lb_line {
@@ -221,7 +222,7 @@ impl StringLengths
 
 	pub fn set_elo(&mut self, elo: i32)
 	{
-		let new = f64::from(elo.abs()).log10().floor() as usize + 1;
+		let new = elo.abs().pipe(f64::from).pipe(string_len);
 		if new > self.elo
 		{
 			self.elo = new;
@@ -230,7 +231,7 @@ impl StringLengths
 
 	pub fn set_wins(&mut self, wins: u32)
 	{
-		let new = f64::from(wins).log10().floor() as usize + 1;
+		let new = wins.pipe(f64::from).pipe(string_len);
 		if new > self.wins
 		{
 			self.wins = new;
@@ -238,7 +239,7 @@ impl StringLengths
 	}
 	pub fn set_losses(&mut self, losses: u32)
 	{
-		let new = f64::from(losses).log10().floor() as usize + 1;
+		let new = losses.pipe(f64::from).pipe(string_len);
 		if new > self.losses
 		{
 			self.losses = new;
@@ -288,6 +289,16 @@ impl StringLengths
 	}
 }
 
+fn string_len(n: f64) -> usize
+{
+	#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+	fn floor_to_usize(n: f64) -> usize
+	{
+		n as usize
+	}
+	n.log10().pipe(floor_to_usize) + 1
+}
+
 async fn user_score(
 	ctx: Context<'_>,
 	guild: &PartialGuild,
@@ -323,7 +334,7 @@ async fn user_score(
 			target_member.mention()
 		))
 		.await?;
-	};
+	}
 
 	Ok(())
 }

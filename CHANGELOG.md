@@ -1,3 +1,16 @@
+# 0.2.8
+## Backend
+- Updated all dependencies to their latest versions
+    - `dirs`: 5.0.1 -> 6.0.0
+    - `rand`: 0.8.5 -> 0.9.2 (this is the big one)
+    - `strum(_macros)?`: 0.26.2 -> 0.27.2
+    - `thiserror`: 1.0.60 -> 2.0.17
+    - `toml`: 0.8.12 -> 0.9.7
+- Removed dependency on `lazy_static` in favor of `std::sync::LazyLock`
+## Repo cleanliness
+- Removed `bacon.toml` file in favor of defining clippy lints directly in `Cargo.toml`
+- Updated `README.md` to link to the codeberg repo instead of the github one as the main link
+
 # 0.2.7
 ## Commands
 - `/roll` now truncates the embed string if it would be > 1024 characters rather than allowing the malformed embed field message to be sent

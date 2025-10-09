@@ -1,16 +1,15 @@
 // hex color literals are prefectly fine without spaces thank you very much -morgan 2024-01-15
 #![allow(clippy::unreadable_literal)]
-#![feature(let_chains, string_into_chars)]
+#![feature(string_into_chars)]
 
 mod command;
 mod data;
 mod events;
 mod respond;
 
-pub use respond::*;
-
-use data::{config::Config, Data, DataManager};
+use data::{Data, DataManager, config::Config};
 use poise::serenity_prelude::{ClientBuilder, Color, CreateAllowedMentions, GatewayIntents};
+pub use respond::*;
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;

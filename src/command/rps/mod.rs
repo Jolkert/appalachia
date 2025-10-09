@@ -1,26 +1,24 @@
 mod leaderboard;
 mod model;
 
-use std::{fmt::Write, time::Duration};
+use std::{fmt::Write, sync::LazyLock, time::Duration};
 
-use lazy_static::lazy_static;
 use model::{ChallengerOpponentPair, Game, MatchOutcome, RoundOutcome, Selection, Side};
 use poise::{
+	CreateReply,
 	serenity_prelude::{
 		ButtonStyle, CreateActionRow, CreateAllowedMentions, CreateButton, CreateEmbed,
 		CreateEmbedFooter, CreateMessage, GuildChannel, Member, Mentionable, Message, User,
 	},
-	CreateReply,
 };
 use rand::Rng;
 
+use super::ExpectGuildOnly;
 use crate::{
+	Context, Error, Reply, Respond,
 	command::parent_command,
 	data::{Leaderboard, Outcome, Score},
-	Context, Error, Reply, Respond,
 };
-
-use super::ExpectGuildOnly;
 
 parent_command! {
 	let rps = poise::command(
@@ -263,7 +261,7 @@ async fn await_challenge_accept(
 
 				break false;
 			}
-			_ => continue,
+			_ => (),
 		}
 	};
 	Ok(accepted)
@@ -276,37 +274,44 @@ async fn send_challenge_message(
 	first_to: u32,
 ) -> Result<Message, Error>
 {
-	ctx.send(CreateReply::default()
-		.content(opponent.mention().to_string())
-		.embed(
-			CreateEmbed::new()
-				.title("Rock Paper Scissors")
-				.description(format!(
-					"{} challenges {} to a{} Rock, Paper, Scissors match!\n{}, do you accept?",
-					challenger.mention(),
-					opponent.mention(),
-					(first_to > 1)
-						.then(|| format!(" **first-to {first_to}**"))
-						.unwrap_or_default(),
-					opponent.mention()
-				))
-				.color(crate::DEFAULT_COLOR)
-				.footer(CreateEmbedFooter::new(
-					"\u{2757} Interctions will only be valid within an hour of this message being sent",
-				)),
-		)
-		.components(vec![CreateActionRow::Buttons(vec![
-			CreateButton::new("rps-accept")
-				.emoji('\u{1f44d}')
-				.label("Accept")
-				.style(ButtonStyle::Success),
-			CreateButton::new("rps-decline")
-				.emoji('\u{1f44e}')
-				.label("Decline")
-				.style(ButtonStyle::Danger),
-		])])
-		.reply(true)
-		.allowed_mentions(CreateAllowedMentions::new()))
+	ctx.send(
+		CreateReply::default()
+			.content(opponent.mention().to_string())
+			.embed(
+				CreateEmbed::new()
+					.title("Rock Paper Scissors")
+					.description(format!(
+						"{} challenges {} to a{} Rock, Paper, Scissors match!\n{}, do you accept?",
+						challenger.mention(),
+						opponent.mention(),
+						if first_to > 1
+						{
+							format!(" **first-to {first_to}**")
+						}
+						else
+						{
+							String::default()
+						},
+						opponent.mention()
+					))
+					.color(crate::DEFAULT_COLOR)
+					.footer(CreateEmbedFooter::new(
+						"\u{2757} Interctions will only be valid within an hour of this message being sent",
+					)),
+			)
+			.components(vec![CreateActionRow::Buttons(vec![
+				CreateButton::new("rps-accept")
+					.emoji('\u{1f44d}')
+					.label("Accept")
+					.style(ButtonStyle::Success),
+				CreateButton::new("rps-decline")
+					.emoji('\u{1f44e}')
+					.label("Decline")
+					.style(ButtonStyle::Danger),
+			])])
+			.reply(true)
+			.allowed_mentions(CreateAllowedMentions::new()),
+	)
 	.await?
 	.into_message()
 	.await
@@ -325,7 +330,7 @@ async fn start_game(
 	{
 		if is_bot_match
 		{
-			game[Side::Opponent].select(rand::thread_rng().gen());
+			game[Side::Opponent].select(rand::rng().random());
 		}
 		let selection_message = channel
 			.send_message(ctx, SELECTION_MESSAGE_TEMPLATE.clone())
@@ -469,8 +474,8 @@ async fn start_bot_match(ctx: Context<'_>, first_to: u32) -> Result<(), Error>
 	Ok(())
 }
 
-lazy_static! {
-	static ref SELECTION_MESSAGE_TEMPLATE: CreateMessage = CreateMessage::new()
+static SELECTION_MESSAGE_TEMPLATE: LazyLock<CreateMessage> = LazyLock::new(|| {
+	CreateMessage::new()
 		.embed(
 			CreateEmbed::new()
 				.title("Make your selection!")
@@ -482,5 +487,5 @@ lazy_static! {
 		)
 		.components(vec![CreateActionRow::Buttons(
 			Selection::map_all(Selection::button).collect(),
-		)]);
-}
+		)])
+});

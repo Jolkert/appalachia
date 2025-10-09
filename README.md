@@ -1,8 +1,8 @@
 # ⛰️ Appalachia
-[<img alt="github" src="https://img.shields.io/badge/jolkert%2Fappalachia-babbf1?style=for-the-badge&logo=github&label=github&logoColor=D9E0EE&labelColor=292c3c" height=23>](https://github.com/jolkert/appalachia)
+[<img alt="Codeberg" src="https://img.shields.io/badge/jolkert%2Fappalachia-babbf1?style=for-the-badge&logo=codeberg&label=codeberg&logoColor=D9E0EE&labelColor=292c3c" height=23>](https://codeberg.org/jolkert/appalachia)
 [<img alt="crates.io" src="https://img.shields.io/crates/v/appalachia?style=for-the-badge&logo=rust&logoColor=D9E0EE&labelColor=292c3c&color=ef9f76" height=23>](https://crates.io/crates/appalachia)
 [<img alt="docs.rs" src="https://img.shields.io/badge/appalachia-e5c890?style=for-the-badge&logo=docs.rs&logoColor=D9E0EE&label=docs.rs&labelColor=292c3c" height=23>](https://docs.rs/appalachia/latest/appalachia)
-[<img alt="Static Badge" src="https://img.shields.io/badge/jolkland-a4baeb?style=for-the-badge&logo=discord&logoColor=D9E0EE&label=discord&labelColor=292c3c" height=23>](https://discord.gg/G3pqGwydVd)
+[<img alt="Discord Server" src="https://img.shields.io/badge/jolkland-a4baeb?style=for-the-badge&logo=discord&logoColor=D9E0EE&label=discord&labelColor=292c3c" height=23>](https://discord.gg/G3pqGwydVd)
 
 **Appalachia** is a discord bot (re)written in Rust
 

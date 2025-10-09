@@ -1,10 +1,10 @@
 use poise::{
-	serenity_prelude::{ChannelType, CreateEmbed, Member, Mentionable},
 	CreateReply,
+	serenity_prelude::{ChannelType, CreateEmbed, Member, Mentionable},
 };
-use rand::prelude::SliceRandom;
+use rand::seq::IndexedRandom;
 
-use crate::{command::ExpectGuildOnly, Context, Error, Reply};
+use crate::{Context, Error, Reply, command::ExpectGuildOnly};
 
 /// Generate a random user from the current server
 #[poise::command(prefix_command, slash_command, guild_only, rename = "randuser")]
@@ -79,7 +79,7 @@ pub async fn random_user(
 		// what's going on here? but the borrow checker *really* doesnt like not declaring this
 		// binding. ive tried a couple ways of limiting it to its own scope without this, but none
 		// of them seem to work properly? kinda weird -morgan 2024-05-14
-		let mut rng = rand::thread_rng();
+		let mut rng = rand::rng();
 		ctx.http().get_member(
 			guild_id,
 			members.choose(&mut rng).ok_or(NoMembersError)?.user.id,

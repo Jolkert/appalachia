@@ -1,9 +1,9 @@
 use std::cmp::Ordering;
 
-use palette::{rgb, FromColor, Oklch, Srgb};
+use palette::{FromColor, Oklch, Srgb, rgb};
 use poise::{
-	serenity_prelude::{Color, CreateAllowedMentions, CreateEmbed, CreateEmbedFooter, Mentionable},
 	CreateReply,
+	serenity_prelude::{Color, CreateAllowedMentions, CreateEmbed, CreateEmbedFooter, Mentionable},
 };
 use saikoro::{error::ParsingError, evaluation::DiceEvaluation};
 
@@ -67,9 +67,14 @@ fn embed_from_roll(
 						group
 							.iter()
 							.map(|roll| {
-								let wrap = (roll.original_value >= group.faces)
-									.then_some("**")
-									.unwrap_or_default();
+								let wrap = if roll.original_value >= group.faces
+								{
+									"**"
+								}
+								else
+								{
+									Default::default()
+								};
 								format!("{wrap}{roll}{wrap}")
 							})
 							.collect::<Vec<_>>()
@@ -85,6 +90,10 @@ fn embed_from_roll(
 	}
 }
 
+// unfortunately, clippy, both of these iterators **are** necessary since neither
+// `std::iter::Take` nor `std::iter::SkipWhile` is `DoubleEndedIterator`
+// -morgan 2025-10-08
+#[allow(clippy::needless_collect)]
 fn clamp_roll_embed_len(raw: String) -> String
 {
 	if raw.len() <= 1024
@@ -119,6 +128,8 @@ fn roll_color(roll: &DiceEvaluation) -> Color
 	const MAX_HUE: f64 = 228.07;
 
 	let norm_z = roll.mean_z_score_normalized();
+
+	#[allow(clippy::cast_possible_truncation)]
 	let hue = match norm_z.partial_cmp(&0.0)
 	{
 		Some(Ordering::Less) => lerp(MIN_HUE, MID_HUE, 1.0 + norm_z),

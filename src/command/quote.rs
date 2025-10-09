@@ -1,13 +1,13 @@
 use poise::{
-	serenity_prelude::{
-		futures::{StreamExt, TryStreamExt},
-		CreateEmbed, Member, Mentionable,
-	},
 	CreateReply,
+	serenity_prelude::{
+		CreateEmbed, Member, Mentionable,
+		futures::{StreamExt, TryStreamExt},
+	},
 };
-use rand::prelude::SliceRandom;
+use rand::seq::IndexedRandom;
 
-use crate::{command::ExpectGuildOnly, Context, Error, Reply};
+use crate::{Context, Error, Reply, command::ExpectGuildOnly};
 
 /// Pull a random quote from the server's set quotes channel
 #[poise::command(slash_command, prefix_command, guild_only)]
@@ -44,7 +44,7 @@ pub async fn quote(
 			.await?;
 
 		if let Some(selected_quote) = {
-			let mut rng = rand::thread_rng();
+			let mut rng = rand::rng();
 			quotes.choose(&mut rng)
 		}
 		{

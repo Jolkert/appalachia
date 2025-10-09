@@ -41,11 +41,9 @@ impl Leaderboard
 		{
 			ranked_vec.push(LeaderboardEntry::new(id, rank, score));
 			if let Some((_, next_score)) = unranked_vec_iter.peek()
+				&& &score != next_score
 			{
-				if &score != next_score
-				{
-					rank += 1;
-				}
+				rank += 1;
 			}
 		}
 
@@ -134,9 +132,14 @@ impl Score
 
 	pub fn win_rate(&self) -> f64
 	{
-		(self.total_games() != 0)
-			.then(|| f64::from(self.wins) / f64::from(self.total_games()))
-			.unwrap_or_default()
+		if self.total_games() != 0
+		{
+			f64::from(self.wins) / f64::from(self.total_games())
+		}
+		else
+		{
+			Default::default()
+		}
 	}
 
 	fn total_games(&self) -> u32
@@ -173,7 +176,10 @@ impl Score
 			* (outcome.value()
 				- (1.0 + f64::powf(10.0, elo_difference / Self::ELO_SMOOTHING)).recip());
 
-		float_change.floor() as i32
+		#[allow(clippy::cast_possible_truncation)]
+		{
+			float_change.floor() as i32
+		}
 	}
 }
 impl Default for Score
@@ -249,13 +255,6 @@ impl From<bool> for Outcome
 {
 	fn from(value: bool) -> Self
 	{
-		if value
-		{
-			Self::Win
-		}
-		else
-		{
-			Self::Loss
-		}
+		if value { Self::Win } else { Self::Loss }
 	}
 }
