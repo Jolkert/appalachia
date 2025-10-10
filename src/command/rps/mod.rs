@@ -11,7 +11,6 @@ use poise::{
 		CreateEmbedFooter, CreateMessage, GuildChannel, Member, Mentionable, Message, User,
 	},
 };
-use rand::Rng;
 
 use super::ExpectGuildOnly;
 use crate::{
@@ -330,7 +329,7 @@ async fn start_game(
 	{
 		if is_bot_match
 		{
-			game[Side::Opponent].select(rand::rng().random());
+			game[Side::Opponent].select(rand::random());
 		}
 		let selection_message = channel
 			.send_message(ctx, SELECTION_MESSAGE_TEMPLATE.clone())

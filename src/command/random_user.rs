@@ -79,10 +79,13 @@ pub async fn random_user(
 		// what's going on here? but the borrow checker *really* doesnt like not declaring this
 		// binding. ive tried a couple ways of limiting it to its own scope without this, but none
 		// of them seem to work properly? kinda weird -morgan 2024-05-14
-		let mut rng = rand::rng();
 		ctx.http().get_member(
 			guild_id,
-			members.choose(&mut rng).ok_or(NoMembersError)?.user.id,
+			members
+				.choose(&mut rand::rng())
+				.ok_or(NoMembersError)?
+				.user
+				.id,
 		)
 	}
 	.await?;

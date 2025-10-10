@@ -470,7 +470,9 @@ impl rand::distr::Distribution<Selection> for rand::distr::StandardUniform
 			0 => Selection::Rock,
 			1 => Selection::Paper,
 			2 => Selection::Scissors,
-			_ => panic!("Rng generated an out-of-bounds value trying to create a Selection!"),
+			_ => unreachable!(
+				"Rng should never generate a value other than 0, 1, or 2 for a Selection!"
+			),
 		}
 	}
 }
