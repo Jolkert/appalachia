@@ -90,7 +90,7 @@ pub async fn leaderboard(
 }
 
 // TODO: i still dont like this code very much but thats for a later time i think -morgan 2024-05-27
-// it's a litte better now i think. im still not a big fan of the `StringLengths` struct. either in
+// it's a little better now i think. im still not a big fan of the `StringLengths` struct. either in
 // name or in purpose. but i think it'll do for now -morgan 2024-05-28
 async fn full_leaderboard(
 	ctx: Context<'_>,
@@ -260,7 +260,7 @@ impl StringLengths
 	pub fn draw_line(&self, horizontal: char, vertical: char) -> String
 	{
 		// ive done my absolute best to not make this the worst thing ever -morgan 2024-05-20
-		// ok i think its a bit better now? not by a ton but stil -morgan 2024-05-21
+		// ok i think its a bit better now? not by a ton but still -morgan 2024-05-21
 		self.spacings_iterator()
 			.enumerate()
 			.fold(String::new(), |mut line_string, (i, times)| {

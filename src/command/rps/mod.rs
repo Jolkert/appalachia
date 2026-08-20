@@ -295,7 +295,7 @@ async fn send_challenge_message(
 					))
 					.color(crate::DEFAULT_COLOR)
 					.footer(CreateEmbedFooter::new(
-						"\u{2757} Interctions will only be valid within an hour of this message being sent",
+						"\u{2757} Interactions will only be valid within an hour of this message being sent",
 					)),
 			)
 			.components(vec![CreateActionRow::Buttons(vec![
@@ -347,7 +347,7 @@ async fn start_game(
 			)
 			.await?;
 
-		if let Some(match_outcome) = round_outcome.try_delcare_match()
+		if let Some(match_outcome) = round_outcome.try_declare_match()
 		{
 			break Some(match_outcome);
 		}
@@ -419,7 +419,7 @@ async fn await_selections(
 			)
 			.await?;
 
-		if let Some(round_outcome) = game.try_delcare_round()
+		if let Some(round_outcome) = game.try_declare_round()
 		{
 			break Some(round_outcome);
 		}
@@ -481,7 +481,7 @@ static SELECTION_MESSAGE_TEMPLATE: LazyLock<CreateMessage> = LazyLock::new(|| {
 				.description("Pick rock, paper, or, scissors")
 				.color(crate::DEFAULT_COLOR)
 				.footer(CreateEmbedFooter::new(
-					"\u{2757} Interctions will only be valid within an hour of this message being sent",
+					"\u{2757} Interactions will only be valid within an hour of this message being sent",
 				)),
 		)
 		.components(vec![CreateActionRow::Buttons(

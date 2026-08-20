@@ -52,7 +52,7 @@ impl<S> Game<S>
 }
 impl<S: Copy> Game<S>
 {
-	pub fn try_delcare_match(&self) -> Option<MatchOutcome>
+	pub fn try_declare_match(&self) -> Option<MatchOutcome>
 	{
 		self.current_winner()
 			.is_some_and(|winner| self[winner].score >= self.first_to)
@@ -72,7 +72,7 @@ impl Game
 		}
 	}
 
-	pub fn try_delcare_round(&mut self) -> Option<RoundOutcome>
+	pub fn try_declare_round(&mut self) -> Option<RoundOutcome>
 	{
 		self.players
 			.as_ref()

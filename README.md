@@ -15,7 +15,7 @@ the server you wish to add it to
 ## Commands
 ### Rock Paper Scissors `/rps`
 - Using `/rps challenge` you can challenge other users in a server to a rock paper 
-scissors match. If the opponent accpets, you play by interacting with buttons
+scissors match. If the opponent accepts, you play by interacting with buttons
 on a message the bot will send in the channel the challenge was issued from. 
 If you specify an integer in the `first_to` field, the game will continue 
 until either player reaches the specified amount of wins.
