@@ -1,6 +1,6 @@
 [package]
 name = "appalachia"
-version = "0.2.8"
+version = "0.2.9"
 authors = ["jolkert"]
 edition = "2024"
 description = "a discord bot for personal use"

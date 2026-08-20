@@ -1,3 +1,6 @@
+# 0.2.9
+## Bugfixes
+- Fixed typo on RPS interaction message ("interction" -> "interaction")
 # 0.2.8
 ## Backend
 - Updated all dependencies to their latest versions
