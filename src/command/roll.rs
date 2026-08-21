@@ -20,6 +20,8 @@ pub async fn roll(
 	dice: String,
 ) -> Result<(), Error>
 {
+	ctx.defer().await?;
+
 	let visibility = visibility.unwrap_or_default();
 
 	let roll_result = saikoro::evaluate(&dice);
