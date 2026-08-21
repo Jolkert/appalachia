@@ -1,3 +1,8 @@
+# 0.2.10
+## Commands
+- `/rps` now deletes the selection prompt message after a round ends
+## Bugfixes
+- Fixed: `/roll` hangs on large rolls (on the order of 1000dX)
 # 0.2.9
 ## Bugfixes
 - Fixed typo on RPS interaction message ("interction" -> "interaction")
