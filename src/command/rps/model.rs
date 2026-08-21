@@ -134,7 +134,7 @@ impl RoundOutcome
 				|winning_side| {
 					let winner = &members[winning_side];
 					CreateEmbed::new()
-						.description(format!("# {} wins!", winner.mention(),))
+						.description(format!("# {} wins!", winner.mention()))
 						.color(winner.user.accent_colour.unwrap_or(crate::DEFAULT_COLOR))
 						.thumbnail(winner.face())
 				},

@@ -425,6 +425,7 @@ async fn await_selections(
 		}
 	};
 
+	selection_message.delete(ctx.http()).await?;
 	Ok(outcome)
 }
 
